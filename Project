@@ -53,3 +53,128 @@ public class Customer {
         this.password = password;
     }
 }
+package com.billing.data;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CustomerRepository {
+    private Map<String, Customer> customerDatabase = new HashMap<>();
+
+    public void addCustomer(Customer customer) {
+        customerDatabase.put(customer.getCustomerId(), customer);
+    }
+
+    public Customer findCustomerById(String customerId) {
+        return customerDatabase.get(customerId);
+    }
+
+    public boolean isMeterNumberUnique(String meterNumber) {
+        return customerDatabase.values().stream().noneMatch(c -> c.getMeterNumber().equals(meterNumber));
+    }
+}
+
+package com.billing.service;
+
+import com.billing.data.Customer;
+import com.billing.data.CustomerRepository;
+
+import java.util.UUID;
+
+public class CustomerService {
+    private CustomerRepository customerRepository;
+
+    public CustomerService(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
+
+    // Register a new customer
+    public String registerCustomer(String name, String address, String meterNumber, String password) {
+        if (!customerRepository.isMeterNumberUnique(meterNumber)) {
+            throw new IllegalArgumentException("Meter number already exists.");
+        }
+
+        String customerId = UUID.randomUUID().toString();
+        Customer customer = new Customer(customerId, name, address, meterNumber, password);
+        customerRepository.addCustomer(customer);
+
+        return customerId;
+    }
+
+    // Validate customer login
+    public boolean validateLogin(String customerId, String password) {
+        Customer customer = customerRepository.findCustomerById(customerId);
+        return customer != null && customer.getPassword().equals(password);
+    }
+}
+
+package com.billing.presentation;
+
+import com.billing.data.CustomerRepository;
+import com.billing.service.CustomerService;
+
+import java.util.Scanner;
+
+public class Main {
+    private static CustomerRepository customerRepository = new CustomerRepository();
+    private static CustomerService customerService = new CustomerService(customerRepository);
+    private static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("1. Register");
+            System.out.println("2. Login");
+            System.out.println("3. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline left-over
+
+            switch (choice) {
+                case 1:
+                    register();
+                    break;
+                case 2:
+                    login();
+                    break;
+                case 3:
+                    System.out.println("Exiting...");
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid choice, please try again.");
+            }
+        }
+    }
+
+    private static void register() {
+        System.out.print("Enter your name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter your address: ");
+        String address = scanner.nextLine();
+        System.out.print("Enter your meter number: ");
+        String meterNumber = scanner.nextLine();
+        System.out.print("Enter a password: ");
+        String password = scanner.nextLine();
+
+        try {
+            String customerId = customerService.registerCustomer(name, address, meterNumber, password);
+            System.out.println("Registration successful! Your customer ID is: " + customerId);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void login() {
+        System.out.print("Enter your customer ID: ");
+        String customerId = scanner.nextLine();
+        System.out.print("Enter your password: ");
+        String password = scanner.nextLine();
+
+        if (customerService.validateLogin(customerId, password)) {
+            System.out.println("Login successful!");
+            // Proceed to other functionalities after login
+        } else {
+            System.out.println("Invalid customer ID or password. Please try again.");
+        }
+    }
+}

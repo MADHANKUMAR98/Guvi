@@ -178,3 +178,10 @@ public class Main {
         }
     }
 }
+package com.billing;
+
+public interface CustomerRepository {
+    void addCustomer(Customer customer);
+    Customer findCustomerById(String customerId);
+    boolean isMeterNumberUnique(String meterNumber);
+}

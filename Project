@@ -1,0 +1,55 @@
+package com.billing.data;
+
+public class Customer {
+    private String customerId;
+    private String name;
+    private String address;
+    private String meterNumber;
+    private String password;
+
+    public Customer(String customerId, String name, String address, String meterNumber, String password) {
+        this.customerId = customerId;
+        this.name = name;
+        this.address = address;
+        this.meterNumber = meterNumber;
+        this.password = password;
+    }
+
+    // Getters
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getMeterNumber() {
+        return meterNumber;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    // Setters
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setMeterNumber(String meterNumber) {
+        this.meterNumber = meterNumber;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}

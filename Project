@@ -1,41 +1,15 @@
-case 4: // View/Edit Customer Information
-    System.out.print("Enter customer ID: ");
-    String editId = scan.nextLine();
-    Customer customerToEdit = customerService.fetchCustomer(editId);
-    if (customerToEdit != null) {
-        System.out.println("Current Information: " + customerToEdit);
+import java.util.Base64;
+import java.util.UUID;
 
-        // Editing Name
-        System.out.print("Enter new name (or leave blank to keep current): ");
-        String newName = scan.nextLine();
-        if (!newName.isEmpty()) {
-            customerToEdit.setName(newName);
-        }
-
-        // Editing Address
-        System.out.print("Enter new address (or leave blank to keep current): ");
-        String newAddress = scan.nextLine();
-        if (!newAddress.isEmpty()) {
-            customerToEdit.setAddress(newAddress);
-        }
-
-        // Editing Meter Number
-        System.out.print("Enter new meter number (or leave blank to keep current): ");
-        String newMeterNumber = scan.nextLine();
-        if (!newMeterNumber.isEmpty()) {
-            customerToEdit.setMeterNumber(newMeterNumber);
-        }
-
-        // Editing Password
-        System.out.print("Enter new password (or leave blank to keep current): ");
-        String newPassword = scan.nextLine();
-        if (!newPassword.isEmpty()) {
-            customerToEdit.setPassword(newPassword);
-        }
-
-        customerService.updateCustomer(customerToEdit);
-        System.out.println("Customer information updated.");
-    } else {
-        System.out.println("Customer not found.");
+public class ShortIDGenerator {
+    public static String generateShortId() {
+        UUID uuid = UUID.randomUUID();
+        // Get the byte array of the UUID
+        byte[] bytes = new byte[16];
+        ByteBuffer.wrap(bytes).putLong(uuid.getMostSigBits()).putLong(uuid.getLeastSigBits());
+        // Encode the byte array in Base64
+        String base64 = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        // Return a shorter version
+        return base64.substring(0, 8); // Adjust length as needed
     }
-    break;
+}

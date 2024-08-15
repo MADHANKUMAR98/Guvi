@@ -1,305 +1,398 @@
-package com.billing.data;
+package pojo;
 
-public class Customer {
+import java.util.Map;
+import java.util.HashMap;
+
+public class CustomerPojo {
     private String customerId;
     private String name;
     private String address;
     private String meterNumber;
     private String password;
+    private Map<String, Integer> usageRecords; // Key: Month-Year, Value: Usage in kWh
+    private Map<String, Double> billRecords; // Key: Month-Year, Value: Bill amount
+    private Map<String, Double> paymentRecords; // Key: Month-Year, Value: Payment amount
 
-    public Customer(String customerId, String name, String address, String meterNumber, String password) {
+    public CustomerPojo(String customerId, String name, String address, String meterNumber, String password) {
         this.customerId = customerId;
         this.name = name;
         this.address = address;
         this.meterNumber = meterNumber;
         this.password = password;
+        this.usageRecords = new HashMap<>();
+        this.billRecords = new HashMap<>();
+        this.paymentRecords = new HashMap<>();
     }
 
-    // Getters
+    // Getters and Setters for each field
+
     public String getCustomerId() {
         return customerId;
     }
 
-    public String getName() {
-        return name;
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
 
-    public String getAddress() {
-        return address;
+    // (Other getters and setters omitted for brevity)
+
+    public void addUsage(String monthYear, int usage) {
+        this.usageRecords.put(monthYear, usage);
     }
 
-    public String getMeterNumber() {
-        return meterNumber;
+    public void addBill(String monthYear, double billAmount) {
+        this.billRecords.put(monthYear, billAmount);
     }
 
-    public String getPassword() {
-        return password;
+    public void addPayment(String monthYear, double paymentAmount) {
+        this.paymentRecords.put(monthYear, paymentAmount);
     }
 
-    // Setters
-    public void setName(String name) {
-        this.name = name;
+    public Map<String, Integer> getUsageRecords() {
+        return usageRecords;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public Map<String, Double> getBillRecords() {
+        return billRecords;
     }
 
-    public void setMeterNumber(String meterNumber) {
-        this.meterNumber = meterNumber;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public Map<String, Double> getPaymentRecords() {
+        return paymentRecords;
     }
 }
-package com.billing.data;
+package dao;
 
+import java.util.Collection;
+import pojo.CustomerPojo;
+
+public interface CustomerDao {
+    CustomerPojo addCustomer(CustomerPojo newCustomer);
+    CustomerPojo getCustomer(String customerId);
+    Collection<CustomerPojo> getAllCustomers();
+    void updateCustomer(CustomerPojo customer);
+    void deleteCustomer(String customerId);
+}
+
+package dao;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import pojo.CustomerPojo;
 
-public class CustomerRepository {
-    private Map<String, Customer> customerDatabase = new HashMap<>();
+public class CustomerDaoCollectionImpl implements CustomerDao {
+    private Map<String, CustomerPojo> customerDatabase;
 
-    public void addCustomer(Customer customer) {
-        customerDatabase.put(customer.getCustomerId(), customer);
-    }
-
-    public Customer findCustomerById(String customerId) {
-        return customerDatabase.get(customerId);
-    }
-
-    public boolean isMeterNumberUnique(String meterNumber) {
-        return customerDatabase.values().stream().noneMatch(c -> c.getMeterNumber().equals(meterNumber));
-    }
-}
-
-package com.billing.service;
-
-import com.billing.data.Customer;
-import com.billing.data.CustomerRepository;
-
-import java.util.UUID;
-
-public class CustomerService {
-    private CustomerRepository customerRepository;
-
-    public CustomerService(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
-    }
-
-    // Register a new customer
-    public String registerCustomer(String name, String address, String meterNumber, String password) {
-        if (!customerRepository.isMeterNumberUnique(meterNumber)) {
-            throw new IllegalArgumentException("Meter number already exists.");
-        }
-
-        String customerId = UUID.randomUUID().toString();
-        Customer customer = new Customer(customerId, name, address, meterNumber, password);
-        customerRepository.addCustomer(customer);
-
-        return customerId;
-    }
-
-    // Validate customer login
-    public boolean validateLogin(String customerId, String password) {
-        Customer customer = customerRepository.findCustomerById(customerId);
-        return customer != null && customer.getPassword().equals(password);
-    }
-}
-
-package com.billing.presentation;
-
-import com.billing.data.CustomerRepository;
-import com.billing.service.CustomerService;
-
-import java.util.Scanner;
-
-public class Main {
-    private static CustomerRepository customerRepository = new CustomerRepository();
-    private static CustomerService customerService = new CustomerService(customerRepository);
-    private static Scanner scanner = new Scanner(System.in);
-
-    public static void main(String[] args) {
-        while (true) {
-            System.out.println("1. Register");
-            System.out.println("2. Login");
-            System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline left-over
-
-            switch (choice) {
-                case 1:
-                    register();
-                    break;
-                case 2:
-                    login();
-                    break;
-                case 3:
-                    System.out.println("Exiting...");
-                    System.exit(0);
-                    break;
-                default:
-                    System.out.println("Invalid choice, please try again.");
-            }
-        }
-    }
-
-    private static void register() {
-        System.out.print("Enter your name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter your address: ");
-        String address = scanner.nextLine();
-        System.out.print("Enter your meter number: ");
-        String meterNumber = scanner.nextLine();
-        System.out.print("Enter a password: ");
-        String password = scanner.nextLine();
-
-        try {
-            String customerId = customerService.registerCustomer(name, address, meterNumber, password);
-            System.out.println("Registration successful! Your customer ID is: " + customerId);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private static void login() {
-        System.out.print("Enter your customer ID: ");
-        String customerId = scanner.nextLine();
-        System.out.print("Enter your password: ");
-        String password = scanner.nextLine();
-
-        if (customerService.validateLogin(customerId, password)) {
-            System.out.println("Login successful!");
-            // Proceed to other functionalities after login
-        } else {
-            System.out.println("Invalid customer ID or password. Please try again.");
-        }
-    }
-}
-package com.billing;
-
-public interface CustomerRepository {
-    void addCustomer(Customer customer);
-    Customer findCustomerById(String customerId);
-    boolean isMeterNumberUnique(String meterNumber);
-}
-package com.billing;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class InMemoryCustomerRepository implements CustomerRepository {
-    private final Map<String, Customer> customerDatabase = new HashMap<>();
-
-    @Override
-    public void addCustomer(Customer customer) {
-        customerDatabase.put(customer.getCustomerId(), customer);
+    public CustomerDaoCollectionImpl() {
+        this.customerDatabase = new HashMap<>();
     }
 
     @Override
-    public Customer findCustomerById(String customerId) {
+    public CustomerPojo addCustomer(CustomerPojo newCustomer) {
+        customerDatabase.put(newCustomer.getCustomerId(), newCustomer);
+        return newCustomer;
+    }
+
+    @Override
+    public CustomerPojo getCustomer(String customerId) {
         return customerDatabase.get(customerId);
     }
 
     @Override
-    public boolean isMeterNumberUnique(String meterNumber) {
-        return customerDatabase.values().stream().noneMatch(c -> c.getMeterNumber().equals(meterNumber));
+    public Collection<CustomerPojo> getAllCustomers() {
+        return customerDatabase.values();
+    }
+
+    @Override
+    public void updateCustomer(CustomerPojo customer) {
+        customerDatabase.put(customer.getCustomerId(), customer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerDatabase.remove(customerId);
     }
 }
-package com.billing;
+package service;
 
+import java.util.Collection;
+import pojo.CustomerPojo;
+
+public interface CustomerService {
+    CustomerPojo registerCustomer(String name, String address, String meterNumber, String password);
+    CustomerPojo loginCustomer(String customerId, String password);
+    void addUsage(String customerId, String monthYear, int usage);
+    void generateBill(String customerId, String monthYear, double unitPrice);
+    Collection<CustomerPojo> getAllCustomers();
+    CustomerPojo getCustomerById(String customerId);
+    void updateCustomerDetails(CustomerPojo customer);
+    void recordPayment(String customerId, String monthYear, double amount);
+}
+
+package service;
+
+import java.util.Collection;
 import java.util.UUID;
+import dao.CustomerDao;
+import dao.CustomerDaoCollectionImpl;
+import pojo.CustomerPojo;
 
-public class CustomerService {
-    private final CustomerRepository customerRepository;
+public class CustomerServiceImpl implements CustomerService {
+    private CustomerDao customerDao;
 
-    public CustomerService(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
+    public CustomerServiceImpl() {
+        this.customerDao = new CustomerDaoCollectionImpl();
     }
 
-    public String registerCustomer(String name, String address, String meterNumber, String password) {
-        if (!customerRepository.isMeterNumberUnique(meterNumber)) {
-            throw new IllegalArgumentException("Meter number already exists.");
-        }
-
+    @Override
+    public CustomerPojo registerCustomer(String name, String address, String meterNumber, String password) {
         String customerId = UUID.randomUUID().toString();
-        Customer customer = new Customer(customerId, name, address, meterNumber, password);
-        customerRepository.addCustomer(customer);
-
-        return customerId;
+        CustomerPojo newCustomer = new CustomerPojo(customerId, name, address, meterNumber, password);
+        return customerDao.addCustomer(newCustomer);
     }
 
-    public boolean validateLogin(String customerId, String password) {
-        Customer customer = customerRepository.findCustomerById(customerId);
-        return customer != null && customer.getPassword().equals(password);
+    @Override
+    public CustomerPojo loginCustomer(String customerId, String password) {
+        CustomerPojo customer = customerDao.getCustomer(customerId);
+        if (customer != null && customer.getPassword().equals(password)) {
+            return customer;
+        }
+        return null;
+    }
+
+    @Override
+    public void addUsage(String customerId, String monthYear, int usage) {
+        CustomerPojo customer = customerDao.getCustomer(customerId);
+        if (customer != null) {
+            customer.addUsage(monthYear, usage);
+            customerDao.updateCustomer(customer);
+        }
+    }
+
+    @Override
+    public void generateBill(String customerId, String monthYear, double unitPrice) {
+        CustomerPojo customer = customerDao.getCustomer(customerId);
+        if (customer != null) {
+            int usage = customer.getUsageRecords().getOrDefault(monthYear, 0);
+            double billAmount = usage * unitPrice;
+            customer.addBill(monthYear, billAmount);
+            customerDao.updateCustomer(customer);
+        }
+    }
+
+    @Override
+    public Collection<CustomerPojo> getAllCustomers() {
+        return customerDao.getAllCustomers();
+    }
+
+    @Override
+    public CustomerPojo getCustomerById(String customerId) {
+        return customerDao.getCustomer(customerId);
+    }
+
+    @Override
+    public void updateCustomerDetails(CustomerPojo customer) {
+        customerDao.updateCustomer(customer);
+    }
+
+    @Override
+    public void recordPayment(String customerId, String monthYear, double amount) {
+        CustomerPojo customer = customerDao.getCustomer(customerId);
+        if (customer != null) {
+            customer.addPayment(monthYear, amount);
+            customerDao.updateCustomer(customer);
+        }
     }
 }
-package com.billing;
 
+package presentation;
+
+import java.util.Collection;
 import java.util.Scanner;
+import pojo.CustomerPojo;
+import service.CustomerService;
+import service.CustomerServiceImpl;
 
-public class Main {
-    private static final CustomerRepository customerRepository = new InMemoryCustomerRepository();
-    private static final CustomerService customerService = new CustomerService(customerRepository);
-    private static final Scanner scanner = new Scanner(System.in);
+public class CustomerPresentation {
+    private CustomerService customerService;
+    private Scanner scanner;
 
-    public static void main(String[] args) {
-        while (true) {
-            System.out.println("1. Register");
-            System.out.println("2. Login");
-            System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline left-over
+    public CustomerPresentation() {
+        this.customerService = new CustomerServiceImpl();
+        this.scanner = new Scanner(System.in);
+    }
+
+    public void showMenu() {
+        System.out.println("1. Register Customer");
+        System.out.println("2. Login Customer");
+        System.out.println("3. Add Usage");
+        System.out.println("4. Generate Bill");
+        System.out.println("5. View All Customers");
+        System.out.println("6. View Customer Details");
+        System.out.println("7. Update Customer Details");
+        System.out.println("8. Record Payment");
+        System.out.println("9. Exit");
+    }
+
+    public void execute() {
+        int choice;
+        do {
+            showMenu();
+            System.out.println("Enter your choice: ");
+            choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
             switch (choice) {
                 case 1:
-                    register();
+                    registerCustomer();
                     break;
                 case 2:
-                    login();
+                    loginCustomer();
                     break;
                 case 3:
-                    System.out.println("Exiting...");
-                    System.exit(0);
+                    addUsage();
+                    break;
+                case 4:
+                    generateBill();
+                    break;
+                case 5:
+                    viewAllCustomers();
+                    break;
+                case 6:
+                    viewCustomerDetails();
+                    break;
+                case 7:
+                    updateCustomerDetails();
+                    break;
+                case 8:
+                    recordPayment();
+                    break;
+                case 9:
+                    System.out.println("Thank you for using the system!");
                     break;
                 default:
-                    System.out.println("Invalid choice, please try again.");
+                    System.out.println("Invalid choice. Please try again.");
             }
-        }
+        } while (choice != 9);
     }
 
-    private static void register() {
-        System.out.print("Enter your name: ");
+    private void registerCustomer() {
+        System.out.println("Enter Name: ");
         String name = scanner.nextLine();
-        System.out.print("Enter your address: ");
+        System.out.println("Enter Address: ");
         String address = scanner.nextLine();
-        System.out.print("Enter your meter number: ");
+        System.out.println("Enter Meter Number: ");
         String meterNumber = scanner.nextLine();
-        System.out.print("Enter your password: ");
+        System.out.println("Enter Password: ");
         String password = scanner.nextLine();
 
-        try {
-            String customerId = customerService.registerCustomer(name, address, meterNumber, password);
-            System.out.println("Registration successful! Your Customer ID is: " + customerId);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+        CustomerPojo newCustomer = customerService.registerCustomer(name, address, meterNumber, password);
+        System.out.println("Customer Registered with ID: " + newCustomer.getCustomerId());
+    }
+
+    private void loginCustomer() {
+        System.out.println("Enter Customer ID: ");
+        String customerId = scanner.nextLine();
+        System.out.println("Enter Password: ");
+        String password = scanner.nextLine();
+
+        CustomerPojo customer = customerService.loginCustomer(customerId, password);
+        if (customer != null) {
+            System.out.println("Login successful!");
+        } else {
+                       System.out.println("Login failed! Invalid customer ID or password.");
         }
     }
 
-    private static void login() {
-        System.out.print("Enter your Customer ID: ");
+    private void addUsage() {
+        System.out.println("Enter Customer ID: ");
         String customerId = scanner.nextLine();
-        System.out.print("Enter your password: ");
-        String password = scanner.nextLine();
+        System.out.println("Enter Month-Year (e.g., Aug-2024): ");
+        String monthYear = scanner.nextLine();
+        System.out.println("Enter Usage in kWh: ");
+        int usage = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
 
-        if (customerService.validateLogin(customerId, password)) {
-            System.out.println("Login successful!");
-            // Proceed to customer dashboard or menu
+        customerService.addUsage(customerId, monthYear, usage);
+        System.out.println("Usage recorded successfully for " + monthYear);
+    }
+
+    private void generateBill() {
+        System.out.println("Enter Customer ID: ");
+        String customerId = scanner.nextLine();
+        System.out.println("Enter Month-Year (e.g., Aug-2024): ");
+        String monthYear = scanner.nextLine();
+        System.out.println("Enter Unit Price per kWh: ");
+        double unitPrice = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline
+
+        customerService.generateBill(customerId, monthYear, unitPrice);
+        System.out.println("Bill generated successfully for " + monthYear);
+    }
+
+    private void viewAllCustomers() {
+        Collection<CustomerPojo> allCustomers = customerService.getAllCustomers();
+        allCustomers.forEach(customer -> System.out.println(customer));
+    }
+
+    private void viewCustomerDetails() {
+        System.out.println("Enter Customer ID: ");
+        String customerId = scanner.nextLine();
+
+        CustomerPojo customer = customerService.getCustomerById(customerId);
+        if (customer != null) {
+            System.out.println(customer);
         } else {
-            System.out.println("Invalid Customer ID or Password.");
+            System.out.println("Customer not found with ID: " + customerId);
         }
+    }
+
+    private void updateCustomerDetails() {
+        System.out.println("Enter Customer ID: ");
+        String customerId = scanner.nextLine();
+
+        CustomerPojo customer = customerService.getCustomerById(customerId);
+        if (customer != null) {
+            System.out.println("Enter New Name: ");
+            String name = scanner.nextLine();
+            System.out.println("Enter New Address: ");
+            String address = scanner.nextLine();
+            System.out.println("Enter New Meter Number: ");
+            String meterNumber = scanner.nextLine();
+
+            customer.setName(name);
+            customer.setAddress(address);
+            customer.setMeterNumber(meterNumber);
+
+            customerService.updateCustomerDetails(customer);
+            System.out.println("Customer details updated successfully.");
+        } else {
+            System.out.println("Customer not found with ID: " + customerId);
+        }
+    }
+
+    private void recordPayment() {
+        System.out.println("Enter Customer ID: ");
+        String customerId = scanner.nextLine();
+        System.out.println("Enter Month-Year (e.g., Aug-2024): ");
+        String monthYear = scanner.nextLine();
+        System.out.println("Enter Payment Amount: ");
+        double amount = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline
+
+        customerService.recordPayment(customerId, monthYear, amount);
+        System.out.println("Payment recorded successfully for " + monthYear);
+    }
+}
+
+package main;
+
+import presentation.CustomerPresentation;
+
+public class ElectricityBillingSystemMain {
+
+    public static void main(String[] args) {
+        CustomerPresentation presentation = new CustomerPresentation();
+        presentation.execute();
     }
 }

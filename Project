@@ -404,3 +404,16 @@ public class ElectricityBillingSystemMain {
         presentation.execute();
     }
 }
+package dao;
+
+import pojo.CustomerPojo;
+
+import java.util.Collection;
+
+public interface CustomerDao {
+    CustomerPojo addCustomer(CustomerPojo customer);
+    CustomerPojo getCustomer(String customerId);
+    CustomerPojo updateCustomer(CustomerPojo customer);
+    void deleteCustomer(String customerId);
+    Collection<CustomerPojo> getAllCustomers();
+}

@@ -1,81 +1,41 @@
-package service;
+case 4: // View/Edit Customer Information
+    System.out.print("Enter customer ID: ");
+    String editId = scan.nextLine();
+    Customer customerToEdit = customerService.fetchCustomer(editId);
+    if (customerToEdit != null) {
+        System.out.println("Current Information: " + customerToEdit);
 
-import dao.CustomerDAO;
-import dao.CustomerDAOCollectionImpl;
-import pojo.Customer;
-import java.util.Collection;
+        // Editing Name
+        System.out.print("Enter new name (or leave blank to keep current): ");
+        String newName = scan.nextLine();
+        if (!newName.isEmpty()) {
+            customerToEdit.setName(newName);
+        }
 
-public class CustomerServiceImpl implements CustomerService {
-    private CustomerDAO customerDAO;
+        // Editing Address
+        System.out.print("Enter new address (or leave blank to keep current): ");
+        String newAddress = scan.nextLine();
+        if (!newAddress.isEmpty()) {
+            customerToEdit.setAddress(newAddress);
+        }
 
-    public CustomerServiceImpl() {
-        customerDAO = new CustomerDAOCollectionImpl();
+        // Editing Meter Number
+        System.out.print("Enter new meter number (or leave blank to keep current): ");
+        String newMeterNumber = scan.nextLine();
+        if (!newMeterNumber.isEmpty()) {
+            customerToEdit.setMeterNumber(newMeterNumber);
+        }
+
+        // Editing Password
+        System.out.print("Enter new password (or leave blank to keep current): ");
+        String newPassword = scan.nextLine();
+        if (!newPassword.isEmpty()) {
+            customerToEdit.setPassword(newPassword);
+        }
+
+        customerService.updateCustomer(customerToEdit);
+        System.out.println("Customer information updated.");
+    } else {
+        System.out.println("Customer not found.");
     }
-
-    @Override
-    public Collection<Customer> fetchAllCustomers() {
-        return customerDAO.fetchAllCustomers();
-    }
-
-    @Override
-    public Customer fetchCustomer(String customerId) {
-        return customerDAO.fetchCustomer(customerId);
-    }
-
-    @Override
-    public Customer addCustomer(Customer newCustomer) {
-        return customerDAO.addCustomer(newCustomer);
-    }
-
-    @Override
-    public Customer updateCustomer(Customer updatedCustomer) {
-        return customerDAO.updateCustomer(updatedCustomer);
-    }
-
-    @Override
-    public void deleteCustomer(String customerId) {
-        customerDAO.deleteCustomer(customerId);
-    }
-}
-
-package dao;
-
-import pojo.Customer;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-public class CustomerDAOCollectionImpl implements CustomerDAO {
-    private Map<String, Customer> customerDataStore;
-
-    public CustomerDAOCollectionImpl() {
-        customerDataStore = new HashMap<>();
-        // Initialize with some default data if necessary
-    }
-
-    @Override
-    public Collection<Customer> fetchAllCustomers() {
-        return customerDataStore.values();
-    }
-
-    @Override
-    public Customer fetchCustomer(String customerId) {
-        return customerDataStore.get(customerId);
-    }
-
-    @Override
-    public Customer addCustomer(Customer newCustomer) {
-        customerDataStore.put(newCustomer.getId(), newCustomer);
-        return newCustomer;
-    }
-
-    @Override
-    public Customer updateCustomer(Customer updatedCustomer) {
-        return customerDataStore.replace(updatedCustomer.getId(), updatedCustomer);
-    }
-
-    @Override
-    public void deleteCustomer(String customerId) {
-        customerDataStore.remove(customerId);
-    }
-}
+    break;

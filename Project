@@ -552,3 +552,211 @@ public class CustomerPojo {
         this.password = password;
     }
 }
+package pojo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CustomerPojo {
+    private String customerId;
+    private String name;
+    private String address;
+    private String meterNumber;
+    private String password;
+    private Map<String, Integer> usageHistory; // To store usage history by month
+
+    public CustomerPojo(String customerId, String name, String address, String meterNumber, String password) {
+        this.customerId = customerId;
+        this.name = name;
+        this.address = address;
+        this.meterNumber = meterNumber;
+        this.password = password;
+        this.usageHistory = new HashMap<>();
+    }
+
+    // Getters and setters
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getMeterNumber() {
+        return meterNumber;
+    }
+
+    public void setMeterNumber(String meterNumber) {
+        this.meterNumber = meterNumber;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Map<String, Integer> getUsageHistory() {
+        return usageHistory;
+    }
+
+    public void setUsageHistory(Map<String, Integer> usageHistory) {
+        this.usageHistory = usageHistory;
+    }
+
+    public void addUsage(String month, int usageInKwh) {
+        usageHistory.put(month, usageInKwh);
+    }
+
+    @Override
+    public String toString() {
+        return "CustomerPojo [customerId=" + customerId + ", name=" + name + ", address=" + address + ", meterNumber="
+                + meterNumber + ", password=" + password + ", usageHistory=" + usageHistory + "]";
+    }
+}
+package service;
+
+import dao.CustomerDao;
+import dao.CustomerDaoCollectionImpl;
+import pojo.CustomerPojo;
+import java.util.Collection;
+
+public class CustomerServiceImpl implements CustomerService {
+
+    private CustomerDao customerDao = new CustomerDaoCollectionImpl();
+
+    @Override
+    public void registerCustomer(CustomerPojo customer) {
+        customerDao.addCustomer(customer);
+    }
+
+    @Override
+    public CustomerPojo loginCustomer(String customerId, String password) {
+        CustomerPojo customer = customerDao.getCustomerById(customerId);
+        if (customer != null && customer.getPassword().equals(password)) {
+            return customer;
+        }
+        return null;
+    }
+
+    @Override
+    public void updateCustomerDetails(CustomerPojo customer) {
+        customerDao.updateCustomer(customer);
+    }
+
+    @Override
+    public void addUsage(String customerId, String month, int usageInKwh) {
+        CustomerPojo customer = customerDao.getCustomerById(customerId);
+        if (customer != null) {
+            customer.addUsage(month, usageInKwh);
+            customerDao.updateCustomer(customer);
+        }
+    }
+
+    @Override
+    public Collection<CustomerPojo> getAllCustomers() {
+        return customerDao.getAllCustomers();
+    }
+}
+package presentation;
+
+import service.CustomerService;
+import service.CustomerServiceImpl;
+import pojo.CustomerPojo;
+import java.util.Scanner;
+
+public class CustomerPresentation {
+
+    private CustomerService customerService = new CustomerServiceImpl();
+
+    public void execute() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println("1. Register Customer");
+            System.out.println("2. Login Customer");
+            System.out.println("3. Record Usage");
+            System.out.println("4. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    registerCustomer(scanner);
+                    break;
+                case 2:
+                    loginCustomer(scanner);
+                    break;
+                case 3:
+                    addUsage(scanner);
+                    break;
+                case 4:
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+
+    private void registerCustomer(Scanner scanner) {
+        System.out.print("Enter Name: ");
+        String name = scanner.next();
+        System.out.print("Enter Address: ");
+        String address = scanner.next();
+        System.out.print("Enter Meter Number: ");
+        String meterNumber = scanner.next();
+        System.out.print("Enter Password: ");
+        String password = scanner.next();
+
+        String customerId = "CUST" + (int) (Math.random() * 1000); // Example ID generation
+        CustomerPojo customer = new CustomerPojo(customerId, name, address, meterNumber, password);
+        customerService.registerCustomer(customer);
+        System.out.println("Customer registered successfully with ID: " + customerId);
+    }
+
+    private void loginCustomer(Scanner scanner) {
+        System.out.print("Enter Customer ID: ");
+        String customerId = scanner.next();
+        System.out.print("Enter Password: ");
+        String password = scanner.next();
+
+        CustomerPojo customer = customerService.loginCustomer(customerId, password);
+        if (customer != null) {
+            System.out.println("Login successful. Welcome " + customer.getName());
+            // Additional options for the customer after login
+        } else {
+            System.out.println("Invalid credentials. Try again.");
+        }
+    }
+
+    private void addUsage(Scanner scanner) {
+        System.out.print("Enter Customer ID: ");
+        String customerId = scanner.next();
+        System.out.print("Enter Month: ");
+        String month = scanner.next();
+        System.out.print("Enter Usage in kWh: ");
+        int usageInKwh = scanner.nextInt();
+
+        customerService.addUsage(customerId, month, usageInKwh);
+        System.out.println("Usage recorded successfully for " + month + ".");
+    }
+}

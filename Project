@@ -374,3 +374,225 @@ public class BillingSystemMain {
         presentation.present();
     }
 }
+package presentation;
+
+import java.util.Collection;
+import java.util.Scanner;
+import pojo.CustomerPojo;
+import pojo.PaymentPojo;
+import pojo.BillPojo;
+import service.CustomerService;
+import service.CustomerServiceImpl;
+
+public class Presentation {
+    private CustomerService customerService;
+    private Scanner scan;
+
+    public Presentation() {
+        customerService = new CustomerServiceImpl();
+        scan = new Scanner(System.in);
+    }
+
+    public void present() {
+        while (true) {
+            // Display the menu
+            System.out.println("1. Register");
+            System.out.println("2. Login");
+            System.out.println("3. Add Customer Details");
+            System.out.println("4. View and Edit Customer Information");
+            System.out.println("5. Record Electricity Usage");
+            System.out.println("6. Generate Monthly Bill");
+            System.out.println("7. View Bill History");
+            System.out.println("8. Make a Payment");
+            System.out.println("9. View Payment History");
+            System.out.println("10. Admin - View Overdue Accounts");
+            System.out.println("0. Exit");
+
+            System.out.print("Enter the option: ");
+            int option = scan.nextInt();
+            scan.nextLine(); // Consume the newline character
+
+            switch (option) {
+                case 1:
+                    registerCustomer();
+                    break;
+                case 2:
+                    loginCustomer();
+                    break;
+                case 3:
+                    addCustomerDetails();
+                    break;
+                case 4:
+                    viewAndEditCustomerInfo();
+                    break;
+                case 5:
+                    recordElectricityUsage();
+                    break;
+                case 6:
+                    generateMonthlyBill();
+                    break;
+                case 7:
+                    viewBillHistory();
+                    break;
+                case 8:
+                    makePayment();
+                    break;
+                case 9:
+                    viewPaymentHistory();
+                    break;
+                case 10:
+                    viewOverdueAccounts();
+                    break;
+                case 0:
+                    System.out.println("Exiting...");
+                    scan.close();
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+
+    private void registerCustomer() {
+        System.out.print("Enter name: ");
+        String name = scan.nextLine();
+        System.out.print("Enter address: ");
+        String address = scan.nextLine();
+        System.out.print("Enter meter number: ");
+        String meterNumber = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+
+        CustomerPojo newCustomer = new CustomerPojo(name, address, meterNumber, password);
+        CustomerPojo registeredCustomer = customerService.registerCustomer(newCustomer);
+        if (registeredCustomer != null) {
+            System.out.println("Registration successful. Your customer ID is: " + registeredCustomer.getCustomerId());
+        } else {
+            System.out.println("Registration failed.");
+        }
+    }
+
+    private void loginCustomer() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+
+        CustomerPojo customer = customerService.loginCustomer(customerId, password);
+        if (customer != null) {
+            System.out.println("Login successful.");
+            // Proceed to next actions or menu
+        } else {
+            System.out.println("Invalid credentials.");
+        }
+    }
+
+    private void addCustomerDetails() {
+        System.out.print("Enter name: ");
+        String name = scan.nextLine();
+        System.out.print("Enter address: ");
+        String address = scan.nextLine();
+        System.out.print("Enter meter number: ");
+        String meterNumber = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+
+        CustomerPojo newCustomer = new CustomerPojo(name, address, meterNumber, password);
+        CustomerPojo addedCustomer = customerService.addCustomerDetails(newCustomer);
+        if (addedCustomer != null) {
+            System.out.println("Customer details added successfully.");
+        } else {
+            System.out.println("Failed to add customer details.");
+        }
+    }
+
+    private void viewAndEditCustomerInfo() {
+        System.out.print("Enter customer ID to view: ");
+        String customerId = scan.nextLine();
+
+        CustomerPojo customer = customerService.getCustomerInfo(customerId);
+        if (customer != null) {
+            System.out.println("Customer Info: " + customer);
+            // Prompt user for updates and apply changes
+        } else {
+            System.out.println("Customer not found.");
+        }
+    }
+
+    private void recordElectricityUsage() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        System.out.print("Enter usage (kWh): ");
+        int usage = scan.nextInt();
+        scan.nextLine(); // Consume newline character
+
+        boolean success = customerService.recordUsage(customerId, usage);
+        if (success) {
+            System.out.println("Electricity usage recorded successfully.");
+        } else {
+            System.out.println("Failed to record usage.");
+        }
+    }
+
+    private void generateMonthlyBill() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        System.out.print("Enter month (e.g., 2024-08): ");
+        String month = scan.nextLine();
+
+        BillPojo bill = customerService.generateMonthlyBill(customerId, month);
+        if (bill != null) {
+            System.out.println("Generated Bill: " + bill);
+        } else {
+            System.out.println("Failed to generate bill.");
+        }
+    }
+
+    private void viewBillHistory() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+
+        Collection<BillPojo> bills = customerService.getBillHistory(customerId);
+        if (bills != null) {
+            bills.forEach(bill -> System.out.println("Bill: " + bill));
+        } else {
+            System.out.println("No bills found.");
+        }
+    }
+
+    private void makePayment() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        System.out.print("Enter payment amount: ");
+        double amount = scan.nextDouble();
+        scan.nextLine(); // Consume newline character
+
+        boolean success = customerService.makePayment(customerId, amount);
+        if (success) {
+            System.out.println("Payment successful.");
+        } else {
+            System.out.println("Payment failed.");
+        }
+    }
+
+    private void viewPaymentHistory() {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+
+        Collection<PaymentPojo> payments = customerService.getPaymentHistory(customerId);
+        if (payments != null) {
+            payments.forEach(payment -> System.out.println("Payment: " + payment));
+        } else {
+            System.out.println("No payments found.");
+        }
+    }
+
+    private void viewOverdueAccounts() {
+        Collection<CustomerPojo> overdueAccounts = customerService.getOverdueAccounts();
+        if (overdueAccounts != null) {
+            overdueAccounts.forEach(account -> System.out.println("Overdue Account: " + account));
+        } else {
+            System.out.println("No overdue accounts.");
+        }
+    }
+}

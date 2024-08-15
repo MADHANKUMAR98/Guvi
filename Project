@@ -396,3 +396,101 @@ public class ElectricityBillingSystemMain {
         presentation.execute();
     }
 }
+package pojo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class CustomerPojo {
+    private String customerId;
+    private String name;
+    private String address;
+    private String meterNumber;
+    private String password; // Add the password field
+    private Map<String, Integer> usageHistory;
+    private Map<String, Double> billHistory;
+    private Map<String, Double> paymentHistory;
+
+    public CustomerPojo(String customerId, String name, String address, String meterNumber, String password) {
+        this.customerId = customerId;
+        this.name = name;
+        this.address = address;
+        this.meterNumber = meterNumber;
+        this.password = password; // Initialize the password
+        this.usageHistory = new HashMap<>();
+        this.billHistory = new HashMap<>();
+        this.paymentHistory = new HashMap<>();
+    }
+
+    // Getters and Setters
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getMeterNumber() {
+        return meterNumber;
+    }
+
+    public void setMeterNumber(String meterNumber) {
+        this.meterNumber = meterNumber;
+    }
+
+    public String getPassword() {
+        return password; // Add getter for password
+    }
+
+    public void setPassword(String password) {
+        this.password = password; // Add setter for password
+    }
+
+    public Map<String, Integer> getUsageHistory() {
+        return usageHistory;
+    }
+
+    public void setUsageHistory(Map<String, Integer> usageHistory) {
+        this.usageHistory = usageHistory;
+    }
+
+    public Map<String, Double> getBillHistory() {
+        return billHistory;
+    }
+
+    public void setBillHistory(Map<String, Double> billHistory) {
+        this.billHistory = billHistory;
+    }
+
+    public Map<String, Double> getPaymentHistory() {
+        return paymentHistory;
+    }
+
+    public void setPaymentHistory(Map<String, Double> paymentHistory) {
+        this.paymentHistory = paymentHistory;
+    }
+
+    @Override
+    public String toString() {
+        return "CustomerPojo [customerId=" + customerId + ", name=" + name + ", address=" + address + ", meterNumber="
+                + meterNumber + "]";
+    }
+}

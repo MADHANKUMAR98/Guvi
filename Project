@@ -307,3 +307,88 @@ public class Presentation {
         return java.util.UUID.randomUUID().toString().substring(0, 8);
     }
 }
+package pojo;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Customer {
+    private String id;
+    private String name;
+    private String address;
+    private String meterNumber;
+    private String password;
+    private List<Double> usageHistory;
+    private List<Double> billHistory;
+    private List<Double> paymentHistory;
+
+    public Customer(String id, String name, String address, String meterNumber, String password) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.meterNumber = meterNumber;
+        this.password = password;
+        this.usageHistory = new ArrayList<>();
+        this.billHistory = new ArrayList<>();
+        this.paymentHistory = new ArrayList<>();
+    }
+
+    // Getters and setters for the attributes
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getMeterNumber() { return meterNumber; }
+    public void setMeterNumber(String meterNumber) { this.meterNumber = meterNumber; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    // Method to record electricity usage
+    public void recordUsage(int units) {
+        usageHistory.add((double) units);
+    }
+
+    // Method to generate the latest bill
+    public double generateBill() {
+        double ratePerUnit = 5.0; // Example rate
+        double totalUsage = usageHistory.stream().mapToDouble(Double::doubleValue).sum();
+        double billAmount = totalUsage * ratePerUnit;
+        billHistory.add(billAmount);
+        return billAmount;
+    }
+
+    // Method to get bill history
+    public List<Double> getBillHistory() {
+        return billHistory;
+    }
+
+    // Method to make a payment
+    public void makePayment(double amount) {
+        paymentHistory.add(amount);
+    }
+
+    // Method to get payment history
+    public List<Double> getPaymentHistory() {
+        return paymentHistory;
+    }
+
+    // Method to check if the customer has overdue bills
+    public boolean hasOverdueBills() {
+        // Simple check: If total bill amount is greater than total payments
+        double totalBills = billHistory.stream().mapToDouble(Double::doubleValue).sum();
+        double totalPayments = paymentHistory.stream().mapToDouble(Double::doubleValue).sum();
+        return totalBills > totalPayments;
+    }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", meterNumber='" + meterNumber + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
+}

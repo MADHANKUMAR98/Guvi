@@ -195,19 +195,68 @@ public class Presentation {
                     }
                     break;
                 case 2:
-                    // Implement logic to record electricity usage
+                    System.out.print("Enter Customer ID: ");
+                    String customerId = scan.nextLine();
+                    Customer customer = customerService.fetchCustomer(customerId);
+                    if (customer != null) {
+                        System.out.print("Enter electricity usage: ");
+                        int usage = scan.nextInt();
+                        // Assume there's a method to record usage
+                        customer.recordUsage(usage);
+                        customerService.updateCustomer(customer);
+                        System.out.println("Electricity usage recorded.");
+                    } else {
+                        System.out.println("Customer not found.");
+                    }
                     break;
                 case 3:
-                    // Implement logic to generate a monthly bill
+                    System.out.print("Enter Customer ID: ");
+                    String billingCustomerId = scan.nextLine();
+                    Customer billingCustomer = customerService.fetchCustomer(billingCustomerId);
+                    if (billingCustomer != null) {
+                        // Assume there's a method to generate a bill
+                        double billAmount = billingCustomer.generateBill();
+                        System.out.println("Monthly bill: $" + billAmount);
+                    } else {
+                        System.out.println("Customer not found.");
+                    }
                     break;
                 case 4:
-                    // Implement logic to view bill history
+                    System.out.print("Enter Customer ID: ");
+                    String historyCustomerId = scan.nextLine();
+                    Customer historyCustomer = customerService.fetchCustomer(historyCustomerId);
+                    if (historyCustomer != null) {
+                        // Assume there's a method to fetch bill history
+                        historyCustomer.getBillHistory().forEach(System.out::println);
+                    } else {
+                        System.out.println("Customer not found.");
+                    }
                     break;
                 case 5:
-                    // Implement logic to make a payment
+                    System.out.print("Enter Customer ID: ");
+                    String paymentCustomerId = scan.nextLine();
+                    Customer paymentCustomer = customerService.fetchCustomer(paymentCustomerId);
+                    if (paymentCustomer != null) {
+                        System.out.print("Enter payment amount: ");
+                        double payment = scan.nextDouble();
+                        // Assume there's a method to make a payment
+                        paymentCustomer.makePayment(payment);
+                        customerService.updateCustomer(paymentCustomer);
+                        System.out.println("Payment recorded.");
+                    } else {
+                        System.out.println("Customer not found.");
+                    }
                     break;
                 case 6:
-                    // Implement logic to view payment history
+                    System.out.print("Enter Customer ID: ");
+                    String paymentHistoryCustomerId = scan.nextLine();
+                    Customer paymentHistoryCustomer = customerService.fetchCustomer(paymentHistoryCustomerId);
+                    if (paymentHistoryCustomer != null) {
+                        // Assume there's a method to fetch payment history
+                        paymentHistoryCustomer.getPaymentHistory().forEach(System.out::println);
+                    } else {
+                        System.out.println("Customer not found.");
+                    }
                     break;
                 case 7:
                     System.out.println("Logging out...");
@@ -228,6 +277,7 @@ public class Presentation {
             customerToEdit.setName(newName);
         }
 
+        System
         System.out.println("Current address: " + customerToEdit.getAddress());
         System.out.print("Enter new address (or leave blank): ");
         String newAddress = scan.nextLine();
@@ -250,7 +300,7 @@ public class Presentation {
         }
 
         customerService.updateCustomer(customerToEdit);
-        System.out.println("Customer information updated.");
+        System.out.println("Customer information updated successfully.");
     }
 
     private String generateShortUUID() {

@@ -1,149 +1,524 @@
-package presentation;
+package pojo;
+
+public class Customer {
+    private String id;
+    private String name;
+    private String address;
+    private String meterNumber;
+    private String password;
+    private boolean hasOverdueBills;
+
+    public Customer(String id, String name, String address, String meterNumber, String password) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.meterNumber = meterNumber;
+        this.password = password;
+        this.hasOverdueBills = false; // Default value
+    }
+
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getMeterNumber() { return meterNumber; }
+    public void setMeterNumber(String meterNumber) { this.meterNumber = meterNumber; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    public boolean hasOverdueBills() { return hasOverdueBills; }
+    public void setOverdueBills(boolean hasOverdueBills) { this.hasOverdueBills = hasOverdueBills; }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", meterNumber='" + meterNumber + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
+}
+
+package pojo;
+
+public class Admin {
+    private String id;
+    private String name;
+    private String password;
+
+    public Admin(String id, String name, String password) {
+        this.id = id;
+        this.name = name;
+        this.password = password;
+    }
+
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    @Override
+    public String toString() {
+        return "Admin{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
+}
+
+package dao;
 
 import pojo.Customer;
+import java.util.Collection;
+
+public interface CustomerDAO {
+    Collection<Customer> fetchAllCustomers();
+    Customer fetchCustomer(String customerId);
+    Customer addCustomer(Customer newCustomer);
+    Customer updateCustomer(Customer updatedCustomer);
+    void deleteCustomer(String customerId);
+}
+
+package dao;
+
+import pojo.Customer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+public class CustomerDAOCollectionImpl implements CustomerDAO {
+    private Map<String, Customer> customerDataStore;
+
+    public CustomerDAOCollectionImpl() {
+        customerDataStore = new HashMap<>();
+    }
+
+    @Override
+    public Collection<Customer> fetchAllCustomers() {
+        return customerDataStore.values();
+    }
+
+    @Override
+    public Customer fetchCustomer(String customerId) {
+        return customerDataStore.get(customerId);
+    }
+
+    @Override
+    public Customer addCustomer(Customer newCustomer) {
+        customerDataStore.put(newCustomer.getId(), newCustomer);
+        return newCustomer;
+    }
+
+    @Override
+    public Customer updateCustomer(Customer updatedCustomer) {
+        return customerDataStore.replace(updatedCustomer.getId(), updatedCustomer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerDataStore.remove(customerId);
+    }
+}
+
+package dao;
+
+import pojo.Admin;
+import java.util.Collection;
+
+public interface AdminDAO {
+    Collection<Admin> fetchAllAdmins();
+    Admin fetchAdmin(String adminId);
+    Admin addAdmin(Admin newAdmin);
+    void deleteAdmin(String adminId);
+}
+
+
+package dao;
+
+import pojo.Admin;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+public class AdminDAOCollectionImpl implements AdminDAO {
+    private Map<String, Admin> adminDataStore;
+
+    public AdminDAOCollectionImpl() {
+        adminDataStore = new HashMap<>();
+    }
+
+    @Override
+    public Collection<Admin> fetchAllAdmins() {
+        return adminDataStore.values();
+    }
+
+    @Override
+    public Admin fetchAdmin(String adminId) {
+        return adminDataStore.get(adminId);
+    }
+
+    @Override
+    public Admin addAdmin(Admin newAdmin) {
+        adminDataStore.put(newAdmin.getId(), newAdmin);
+        return newAdmin;
+    }
+
+    @Override
+    public void deleteAdmin(String adminId) {
+        adminDataStore.remove(adminId);
+    }
+}
+package service;
+
+import pojo.Customer;
+import java.util.Collection;
+
+public interface CustomerService {
+    Collection<Customer> fetchAllCustomers();
+    Customer fetchCustomer(String customerId);
+    Customer addCustomer(Customer newCustomer);
+    Customer updateCustomer(Customer updatedCustomer);
+    void deleteCustomer(String customerId);
+}
+package service;
+
+import dao.CustomerDAO;
+import dao.CustomerDAOCollectionImpl;
+import pojo.Customer;
+import java.util.Collection;
+
+public class CustomerServiceImpl implements CustomerService {
+    private CustomerDAO customerDAO;
+
+    public CustomerServiceImpl() {
+        customerDAO = new CustomerDAOCollectionImpl();
+    }
+
+    @Override
+    public Collection<Customer> fetchAllCustomers() {
+        return customerDAO.fetchAllCustomers();
+    }
+
+    @Override
+    public Customer fetchCustomer(String customerId) {
+        return customerDAO.fetchCustomer(customerId);
+    }
+
+    @Override
+    public Customer addCustomer(Customer newCustomer) {
+        return customerDAO.addCustomer(newCustomer);
+    }
+
+    @Override
+    public Customer updateCustomer(Customer updatedCustomer) {
+        return customerDAO.updateCustomer(updatedCustomer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerDAO.deleteCustomer(customerId);
+    }
+}
+package service;
+
+import pojo.Admin;
+import java.util.Collection;
+
+public interface AdminService {
+    Collection<Admin> fetchAllAdmins();
+    Admin fetchAdmin(String adminId);
+    Admin addAdmin(Admin newAdmin);
+    void deleteAdmin(String adminId);
+}
+package service;
+
+import dao.AdminDAO;
+import dao.AdminDAOCollectionImpl;
+import pojo.Admin;
+import java.util.Collection;
+
+public class AdminServiceImpl implements AdminService {
+    private AdminDAO adminDAO;
+
+    public AdminServiceImpl() {
+        adminDAO = new AdminDAOCollectionImpl();
+    }
+
+    @Override
+    public Collection<Admin> fetchAllAdmins() {
+        return adminDAO.fetchAllAdmins();
+    }
+
+    @Override
+    public Admin fetchAdmin(String adminId) {
+        return adminDAO.fetchAdmin(adminId);
+    }
+
+    @Override
+    public Admin addAdmin(Admin newAdmin) {
+        return adminDAO.addAdmin(newAdmin);
+    }
+
+    @Override
+    public void deleteAdmin(String adminId) {
+        adminDAO.deleteAdmin(adminId);
+    }
+}
+package presentation;
+
+import pojo.Admin;
+import pojo.Customer;
+import service.AdminService;
+import service.AdminServiceImpl;
 import service.CustomerService;
 import service.CustomerServiceImpl;
 
+import java.util.Collection;
 import java.util.Scanner;
+import java.util.UUID;
 
 public class Presentation {
     private CustomerService customerService;
-    private boolean isRegistered = false;
-    private boolean isLoggedIn = false;
+    private AdminService adminService;
 
     public Presentation() {
         customerService = new CustomerServiceImpl();
+        adminService = new AdminServiceImpl();
     }
 
     public void present() {
         Scanner scan = new Scanner(System.in);
+        boolean isLoggedIn = false;
+        boolean isAdmin = false;
+
         while (true) {
-            if (!isRegistered) {
-                System.out.println("1. Register");
-            }
-            if (isRegistered && !isLoggedIn) {
-                System.out.println("2. Login");
-            }
+            if (!isLoggedIn) {
+                System.out.println("1. Register as Admin");
+                System.out.println("2. Login as Admin");
+                System.out.println("3. Register as Customer");
+                System.out.println("4. Login as Customer");
+                System.out.println("5. Exit");
+                System.out.print("Enter your option: ");
+                int option = scan.nextInt();
+                scan.nextLine(); // consume newline
 
-            if (isLoggedIn) {
-                System.out.println("3. Add Customer Details");
-                System.out.println("4. View/Edit Customer Information");
-                System.out.println("5. Record Electricity Usage");
-                System.out.println("6. Generate Monthly Bill");
-                System.out.println("7. View Bill History");
-                System.out.println("8. Make a Payment");
-                System.out.println("9. View Payment History");
-                System.out.println("10. Admin - View Overdue Accounts");
-                System.out.println("11. Exit");
+                switch (option) {
+                    case 1:
+                        registerAdmin(scan);
+                        break;
+                    case 2:
+                        isLoggedIn = loginAdmin(scan);
+                        isAdmin = isLoggedIn;
+                        break;
+                    case 3:
+                        registerCustomer(scan);
+                        break;
+                    case 4:
+                        isLoggedIn = loginCustomer(scan);
+                        isAdmin = false;
+                        break;
+                    case 5:
+                        scan.close();
+                        System.out.println("Exiting...");
+                        return;
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                        break;
+                }
+            } else {
+                if (isAdmin) {
+                    showAdminMenu(scan);
+                } else {
+                    showCustomerMenu(scan);
+                }
             }
+        }
+    }
 
+    private void registerAdmin(Scanner scan) {
+        System.out.print("Enter name: ");
+        String name = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+        String id = UUID.randomUUID().toString().substring(0, 8); // Generate a shorter ID
+        Admin newAdmin = new Admin(id, name, password);
+        adminService.addAdmin(newAdmin);
+        System.out.println("Admin registered with ID: " + id);
+    }
+
+    private boolean loginAdmin(Scanner scan) {
+        System.out.print("Enter admin ID: ");
+        String adminId = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+        Admin admin = adminService.fetchAdmin(adminId);
+        if (admin != null && admin.getPassword().equals(password)) {
+            System.out.println("Admin login successful.");
+            return true;
+        } else {
+            System.out.println("Invalid credentials.");
+            return false;
+        }
+    }
+
+    private void registerCustomer(Scanner scan) {
+        System.out.print("Enter name: ");
+        String name = scan.nextLine();
+        System.out.print("Enter address: ");
+        String address = scan.nextLine();
+        System.out.print("Enter meter number: ");
+        String meterNumber = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+        String id = UUID.randomUUID().toString().substring(0, 8); // Generate a shorter ID
+        Customer newCustomer = new Customer(id, name, address, meterNumber, password);
+        customerService.addCustomer(newCustomer);
+        System.out.println("Customer registered with ID: " + id);
+    }
+
+    private boolean loginCustomer(Scanner scan) {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        System.out.print("Enter password: ");
+        String password = scan.nextLine();
+        Customer customer = customerService.fetchCustomer(customerId);
+        if (customer != null && customer.getPassword().equals(password)) {
+            System.out.println("Customer login successful.");
+            return true;
+        } else {
+            System.out.println("Invalid credentials.");
+            return false;
+        }
+    }
+
+    private void showAdminMenu(Scanner scan) {
+        while (true) {
+            System.out.println("Admin Menu:");
+            System.out.println("1. View All Customers");
+            System.out.println("2. View Overdue Accounts");
+            System.out.println("3. Logout");
             System.out.print("Enter your option: ");
             int option = scan.nextInt();
             scan.nextLine(); // consume newline
 
             switch (option) {
-                case 1: // User Registration
-                    if (!isRegistered) {
-                        System.out.print("Enter name: ");
-                        String name = scan.nextLine();
-                        System.out.print("Enter address: ");
-                        String address = scan.nextLine();
-                        System.out.print("Enter meter number: ");
-                        String meterNumber = scan.nextLine();
-                        System.out.print("Enter password: ");
-                        String password = scan.nextLine();
-                        String id = UUID.randomUUID().toString().substring(0, 8); // Shortened UUID
-                        Customer newCustomer = new Customer(id, name, address, meterNumber, password);
-                        customerService.addCustomer(newCustomer);
-                        isRegistered = true;
-                        System.out.println("Customer registered with ID: " + id);
-                    } else {
-                        System.out.println("You have already registered.");
-                    }
+                case 1:
+                    viewAllCustomers();
                     break;
-                case 2: // Customer Login
-                    if (isRegistered && !isLoggedIn) {
-                        System.out.print("Enter customer ID: ");
-                        String loginId = scan.nextLine();
-                        System.out.print("Enter password: ");
-                        String loginPassword = scan.nextLine();
-                        Customer customer = customerService.fetchCustomer(loginId);
-                        if (customer != null && customer.getPassword().equals(loginPassword)) {
-                            isLoggedIn = true;
-                            System.out.println("Login successful.");
-                        } else {
-                            System.out.println("Invalid credentials.");
-                        }
-                    } else if (!isRegistered) {
-                        System.out.println("Please register first.");
-                    } else {
-                        System.out.println("You are already logged in.");
-                    }
+                case 2:
+                    viewOverdueAccounts();
                     break;
-                // Other cases remain the same
-                case 3: // Add Customer Details
-                    if (isLoggedIn) {
-                        // Code for adding customer details
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 4: // View/Edit Customer Information
-                    if (isLoggedIn) {
-                        // Code for viewing/editing customer information
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 5: // Record Electricity Usage
-                    if (isLoggedIn) {
-                        // Code for recording electricity usage
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 6: // Generate Monthly Bill
-                    if (isLoggedIn) {
-                        // Code for generating monthly bill
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 7: // View Bill History
-                    if (isLoggedIn) {
-                        // Code for viewing bill history
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 8: // Make a Payment
-                    if (isLoggedIn) {
-                        // Code for making a payment
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 9: // View Payment History
-                    if (isLoggedIn) {
-                        // Code for viewing payment history
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 10: // Admin - View Overdue Accounts
-                    if (isLoggedIn) {
-                        // Code for viewing overdue accounts
-                    } else {
-                        System.out.println("You need to log in first.");
-                    }
-                    break;
-                case 11: // Exit
-                    scan.close();
-                    System.out.println("Exiting...");
+                case 3:
+                    System.out.println("Logging out...");
                     return;
                 default:
                     System.out.println("Invalid option. Please try again.");
+                    break;
             }
+        }
+    }
+
+    private void showCustomerMenu(Scanner scan) {
+        while (true) {
+            System.out.println("Customer Menu:");
+            System.out.println("1. View/Edit Customer Information");
+            System.out.println("2. Record Electricity Usage");
+            System.out.println("3. Generate Monthly Bill");
+            System.out.println("4. View Bill History");
+            System.out.println("5. Make a Payment");
+            System.out.println("6. View Payment History");
+            System.out.println("7. Logout");
+            System.out.print("Enter your option: ");
+            int option = scan.nextInt();
+            scan.nextLine(); // consume newline
+
+            switch (option) {
+                case 1:
+                    editCustomerInfo(scan);
+                    break;
+                case 2:
+                    // Implement recording electricity usage
+                    break;
+                case 3:
+                    // Implement generating monthly bill
+                    break;
+                case 4:
+                    // Implement viewing bill history
+                    break;
+                case 5:
+                    // Implement making a payment
+                    break;
+                case 6:
+                    // Implement viewing payment history
+                    break;
+                case 7:
+                    System.out.println("Logging out...");
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        }
+    }
+
+    private void viewAllCustomers() {
+        Collection<Customer> customers = customerService.fetchAllCustomers();
+        if (customers.isEmpty()) {
+            System.out.println("No customers found.");
+        } else {
+            customers.forEach(System.out::println);
+        }
+    }
+
+    private void viewOverdueAccounts() {
+        Collection<Customer> customers = customerService.fetchAllCustomers();
+        customers.stream()
+                 .filter(Customer::hasOverdueBills)
+                 .forEach(customer -> System.out.println("Overdue Customer ID: " + customer.getId()));
+    }
+
+    private void editCustomerInfo(Scanner scan) {
+        System.out.print("Enter customer ID: ");
+        String customerId = scan.nextLine();
+        Customer customer = customerService.fetchCustomer(customerId);
+        if (customer != null) {
+            System.out.println("Current Information: " + customer);
+            System.out.print("Enter new name (or leave blank to keep current): ");
+            String newName = scan.nextLine();
+            if (!newName.isEmpty()) {
+                customer.setName(newName);
+            }
+
+            System.out.print("Enter new address (or leave blank to keep current): ");
+            String newAddress = scan.nextLine();
+            if (!newAddress.isEmpty()) {
+                customer.setAddress(newAddress);
+            }
+
+            System.out.print("Enter new meter number (or leave blank to keep current): ");
+            String newMeterNumber = scan.nextLine();
+            if (!newMeterNumber.isEmpty()) {
+                customer.setMeterNumber(newMeterNumber);
+            }
+
+            System.out.print("Enter new password (or leave blank to keep current): ");
+            String newPassword = scan.nextLine();
+            if (!newPassword.isEmpty()) {
+                customer.setPassword(newPassword);
+            }
+
+            customerService.updateCustomer(customer);
+            System.out.println("Customer information updated.");
+        } else {
+            System.out.println("Customer not found.");
         }
     }
 }

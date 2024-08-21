@@ -1,146 +1,47 @@
-package pojo;
-
-import java.util.HashMap;
-import java.util.Map;
-
 public class Customer {
+    // Existing fields and methods...
 
-    private String id;
-    private String name;
-    private String address;
-    private String meterNumber;
-    private String password;
-    private Map<String, Double> bills;
-    private Map<String, Double> payments;
-    private Map<String, Integer> usage;
-
-    public Customer(String id, String name, String address, String meterNumber, String password) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-        this.meterNumber = meterNumber;
-        this.password = password;
-        this.bills = new HashMap<>();
-        this.payments = new HashMap<>();
-        this.usage = new HashMap<>();
-    }
-
-    // Getters and Setters
-
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getMeterNumber() {
-        return meterNumber;
-    }
-
-    public void setMeterNumber(String meterNumber) {
-        this.meterNumber = meterNumber;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Map<String, Double> getBills() {
-        return bills;
-    }
-
-    public void setBills(Map<String, Double> bills) {
-        this.bills = bills;
-    }
-
-    public Map<String, Double> getPayments() {
+    public Map<String, Double> getPaymentHistory() {
         return payments;
     }
 
-    public void setPayments(Map<String, Double> payments) {
-        this.payments = payments;
-    }
-
-    public Map<String, Integer> getUsage() {
-        return usage;
-    }
-
-    public void setUsage(Map<String, Integer> usage) {
-        this.usage = usage;
-    }
-
-    public void addUsage(String month, int kwh) {
-        usage.put(month, kwh);
-    }
-
-    public int getUsage(String month) {
-        return usage.getOrDefault(month, 0);
-    }
-
-    public void addBill(String month, double amount) {
-        bills.put(month, amount);
-    }
-
-    public double getBill(String month) {
-        return bills.getOrDefault(month, 0.0);
-    }
-
-    public void addPayment(String month, double amount) {
-        payments.put(month, amount);
-    }
-
-    public double getPayment(String month) {
-        return payments.getOrDefault(month, 0.0);
-    }
-
-    public void makePayment(String month, double paymentAmount) {
-        if (bills.containsKey(month)) {
-            double billAmount = bills.get(month);
-            if (paymentAmount >= billAmount) {
-                payments.put(month, billAmount);
-                bills.put(month, 0.0);
-            } else {
-                System.out.println("Payment amount is less than the bill amount. Please pay the full amount.");
-            }
-        } else {
-            System.out.println("No bill found for the specified month.");
-        }
-    }
-
-    public void generateBill(String month) {
+    public double generateBill(String month) {
         int kwh = getUsage(month);
         double unitPrice = 4.60;
         double billAmount = kwh * unitPrice;
         addBill(month, billAmount);
+        return billAmount;
     }
 
-    @Override
-    public String toString() {
-        return "Customer [id=" + id + ", name=" + name + ", address=" + address +
-                ", meterNumber=" + meterNumber + ", password=" + password +
-                ", bills=" + bills + ", payments=" + payments + ", usage=" + usage + "]";
+    // Existing methods...
+}
+private void viewPaymentHistory() {
+    Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+    if (customer != null) {
+        System.out.println("Payment History:");
+        Map<String, Double> payments = customer.getPaymentHistory();
+        payments.forEach((month, amount) -> {
+            System.out.println("Month: " + month + ", Amount Paid: " + amount);
+        });
+    } else {
+        System.out.println("Customer not found.");
     }
 }
 
-   
+private void generateMonthlyBill() {
+    Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+    if (customer != null) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the month to generate the bill for: ");
+        String month = scanner.nextLine();
+        double billAmount = customer.generateBill(month);
+        if (billAmount > 0) {
+            System.out.println("Bill generated for " + month + ": " + billAmount);
+            customerService.updateCustomer(customer);
+        } else {
+            System.out.println("No usage recorded for " + month + ".");
+        }
+    } else {
+        System.out.println("Customer not found.");
+    }
+}

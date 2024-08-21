@@ -30,7 +30,6 @@ public class Customer {
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
@@ -91,46 +90,57 @@ public class Customer {
         this.usage = usage;
     }
 
-    // Adding usage for a particular month
     public void addUsage(String month, int kwh) {
         usage.put(month, kwh);
     }
 
-    // Getting usage for a particular month
     public int getUsage(String month) {
         return usage.getOrDefault(month, 0);
     }
 
-    // Adding bill for a particular month
     public void addBill(String month, double amount) {
         bills.put(month, amount);
     }
 
-    // Getting bill for a particular month
     public double getBill(String month) {
         return bills.getOrDefault(month, 0.0);
     }
 
-    // Making a payment for a particular month
     public void addPayment(String month, double amount) {
         payments.put(month, amount);
     }
 
-    // Getting payment for a particular month
     public double getPayment(String month) {
         return payments.getOrDefault(month, 0.0);
     }
 
-    // Method to return payment history
-    public Map<String, Double> getPaymentHistory() {
-        return payments;
+    public void makePayment(String month, double paymentAmount) {
+        if (bills.containsKey(month)) {
+            double billAmount = bills.get(month);
+            if (paymentAmount >= billAmount) {
+                payments.put(month, billAmount);
+                bills.put(month, 0.0);
+            } else {
+                System.out.println("Payment amount is less than the bill amount. Please pay the full amount.");
+            }
+        } else {
+            System.out.println("No bill found for the specified month.");
+        }
     }
 
-    // Custom toString method for easier readability
+    public void generateBill(String month) {
+        int kwh = getUsage(month);
+        double unitPrice = 4.60;
+        double billAmount = kwh * unitPrice;
+        addBill(month, billAmount);
+    }
+
     @Override
     public String toString() {
-        return "Customer [id=" + id + ", name=" + name + ", address=" + address + 
-                ", meterNumber=" + meterNumber + ", bills=" + bills + 
-                ", payments=" + payments + ", usage=" + usage + "]";
+        return "Customer [id=" + id + ", name=" + name + ", address=" + address +
+                ", meterNumber=" + meterNumber + ", password=" + password +
+                ", bills=" + bills + ", payments=" + payments + ", usage=" + usage + "]";
     }
 }
+
+   

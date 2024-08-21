@@ -4,14 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Customer {
+
     private String id;
     private String name;
     private String address;
     private String meterNumber;
     private String password;
-    private Map<String, Double> usage;
     private Map<String, Double> bills;
-    private Map<String, Double> paymentHistory;
+    private Map<String, Double> payments;
+    private Map<String, Integer> usage;
 
     public Customer(String id, String name, String address, String meterNumber, String password) {
         this.id = id;
@@ -19,73 +20,117 @@ public class Customer {
         this.address = address;
         this.meterNumber = meterNumber;
         this.password = password;
-        this.usage = new HashMap<>();
         this.bills = new HashMap<>();
-        this.paymentHistory = new HashMap<>();
+        this.payments = new HashMap<>();
+        this.usage = new HashMap<>();
     }
 
     // Getters and Setters
 
-    public void addUsage(String month, double usageInkwh) {
-        this.usage.put(month, usageInkwh);
+    public String getId() {
+        return id;
     }
 
-    public double generateBill(String month) {
-        double usageInkwh = this.usage.getOrDefault(month, 0.0);
-        if (usageInkwh > 0 && !this.bills.containsKey(month)) {
-            double billAmount = usageInkwh * 6; // Assume Rs 6 per kWh
-            this.bills.put(month, billAmount);
-            return billAmount;
-        }
-        return 0.0;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public void makePayment(String month, double payment) {
-        this.paymentHistory.put(month, payment);
-        this.bills.remove(month);
+    public String getName() {
+        return name;
     }
 
-    public Map<String, Double> getPaymentHistory() {
-        return this.paymentHistory;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getMeterNumber() {
+        return meterNumber;
+    }
+
+    public void setMeterNumber(String meterNumber) {
+        this.meterNumber = meterNumber;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Map<String, Double> getBills() {
-        return this.bills;
+        return bills;
     }
 
-    // Additional methods as needed
-}
-
-private void viewPaymentHistory() {
-    Customer customer = customerService.fetchCustomer(loggedInCustomerId);
-    if (customer != null) {
-        System.out.println("Payment History:");
-        Map<String, Double> payments = customer.getPaymentHistory();
-        payments.forEach((month, amount) -> {
-            System.out.println("Month: " + month + ", Amount: Rs " + amount);
-        });
-    } else {
-        System.out.println("Customer not found.");
+    public void setBills(Map<String, Double> bills) {
+        this.bills = bills;
     }
-}
 
-private void makePayment() {
-    System.out.print("Enter month (e.g., July 2024): ");
-    String month = scanner.nextLine();
-    System.out.print("Enter payment amount: ");
-    double payment = scanner.nextDouble();
+    public Map<String, Double> getPayments() {
+        return payments;
+    }
 
-    Customer customer = customerService.fetchCustomer(loggedInCustomerId);
-    if (customer != null) {
-        double amountDue = customer.getBills().getOrDefault(month, 0.0);
-        if (payment >= amountDue) {
-            customer.makePayment(month, payment);
-            customerService.updateCustomer(customer);
-            System.out.println("Payment successful.");
-        } else {
-            System.out.println("Insufficient payment. Please pay the full amount.");
-        }
-    } else {
-        System.out.println("Customer not found.");
+    public void setPayments(Map<String, Double> payments) {
+        this.payments = payments;
+    }
+
+    public Map<String, Integer> getUsage() {
+        return usage;
+    }
+
+    public void setUsage(Map<String, Integer> usage) {
+        this.usage = usage;
+    }
+
+    // Adding usage for a particular month
+    public void addUsage(String month, int kwh) {
+        usage.put(month, kwh);
+    }
+
+    // Getting usage for a particular month
+    public int getUsage(String month) {
+        return usage.getOrDefault(month, 0);
+    }
+
+    // Adding bill for a particular month
+    public void addBill(String month, double amount) {
+        bills.put(month, amount);
+    }
+
+    // Getting bill for a particular month
+    public double getBill(String month) {
+        return bills.getOrDefault(month, 0.0);
+    }
+
+    // Making a payment for a particular month
+    public void addPayment(String month, double amount) {
+        payments.put(month, amount);
+    }
+
+    // Getting payment for a particular month
+    public double getPayment(String month) {
+        return payments.getOrDefault(month, 0.0);
+    }
+
+    // Method to return payment history
+    public Map<String, Double> getPaymentHistory() {
+        return payments;
+    }
+
+    // Custom toString method for easier readability
+    @Override
+    public String toString() {
+        return "Customer [id=" + id + ", name=" + name + ", address=" + address + 
+                ", meterNumber=" + meterNumber + ", bills=" + bills + 
+                ", payments=" + payments + ", usage=" + usage + "]";
     }
 }

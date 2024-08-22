@@ -1,317 +1,392 @@
 package presentation;
 
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.Scanner;
+
 import pojo.Customer;
 import service.CustomerService;
-import service.CustomerServiceImpl;
-
-import java.util.InputMismatchException;
-import java.util.Scanner;
-import java.util.UUID;
 
 public class Presentation {
-    private CustomerService customerService = new CustomerServiceImpl();
-    private String loggedInCustomerId = null;
-    private String loggedInAdminId = null;
+    private CustomerService customerService = new CustomerService();
+    private String loggedInCustomerId;
+    private Scanner scan;
+
+    public Presentation(Scanner scan) {
+        this.scan = scan;
+    }
 
     public void present() {
-        Scanner scan = new Scanner(System.in);
+        try {
+            while (true) {
+                System.out.println("1. Admin Login");
+                System.out.println("2. Customer Login");
+                System.out.println("3. Customer Registration");
+                System.out.println("4. Exit");
 
+                int choice = scan.nextInt();
+                scan.nextLine(); // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        adminLogin();
+                        break;
+                    case 2:
+                        customerLogin();
+                        break;
+                    case 3:
+                        customerRegister();
+                        break;
+                    case 4:
+                        System.out.println("Exiting the system.");
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            }
+        } catch (InputMismatchException e) {
+            System.err.println("Invalid input type. Please enter a number.");
+            scan.nextLine(); // Consume the incorrect input
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void adminLogin() {
+        try {
+            System.out.print("Enter Admin Username: ");
+            String adminUsername = scan.nextLine();
+            System.out.print("Enter Admin Password: ");
+            String adminPassword = scan.nextLine();
+
+            if (adminUsername.equals("admin1") && adminPassword.equals("1234")) {
+                System.out.println("Admin logged in successfully.");
+                adminMenu();
+            } else {
+                System.out.println("Invalid admin credentials.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error during admin login: " + e.getMessage());
+        }
+    }
+
+    private void adminMenu() {
         while (true) {
             try {
-                System.out.println("---- Electricity Billing System ----");
-                if (loggedInCustomerId == null && loggedInAdminId == null) {
-                    System.out.println("1. Register as Customer");
-                    System.out.println("2. Login as Customer");
-                    System.out.println("3. Login as Admin");
-                    System.out.println("4. Exit");
-                    System.out.print("Enter your option: ");
-                    int option = scan.nextInt();
-                    scan.nextLine(); // consume newline
+                System.out.println("Admin Menu:");
+                System.out.println("1. Add Customer");
+                System.out.println("2. View All Customers");
+                System.out.println("3. Edit Customer");
+                System.out.println("4. Delete Customer");
+                System.out.println("5. View Pending Bills");
+                System.out.println("6. Logout");
 
-                    switch (option) {
-                        case 1:
-                            customerRegister(scan);
-                            break;
-                        case 2:
-                            customerLogin(scan);
-                            break;
-                        case 3:
-                            adminLogin(scan);
-                            break;
-                        case 4:
-                            System.out.println("Exiting...");
-                            return;
-                        default:
-                            System.out.println("Invalid option. Please try again.");
-                    }
-                } else if (loggedInCustomerId != null) {
-                    customerMenu(scan);
-                } else if (loggedInAdminId != null) {
-                    adminMenu(scan);
+                int choice = scan.nextInt();
+                scan.nextLine(); // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        addCustomer();
+                        break;
+                    case 2:
+                        viewAllCustomers();
+                        break;
+                    case 3:
+                        editCustomer();
+                        break;
+                    case 4:
+                        deleteCustomer();
+                        break;
+                    case 5:
+                        viewPendingBills();
+                        break;
+                    case 6:
+                        System.out.println("Admin logged out.");
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
                 }
             } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a number.");
-                scan.next(); // clear invalid input
+                System.err.println("Invalid input type. Please enter a number.");
+                scan.nextLine(); // Consume the incorrect input
+            } catch (Exception e) {
+                System.err.println("An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
 
-    private void customerRegister(Scanner scan) {
-        System.out.print("Enter name: ");
-        String name = scan.nextLine();
-        System.out.print("Enter address: ");
-        String address = scan.nextLine();
-        System.out.print("Enter meter number: ");
-        String meterNumber = scan.nextLine();
-        System.out.print("Enter password: ");
-        String password = scan.nextLine();
-
-        String id = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
-        Customer newCustomer = new Customer(id, name, address, meterNumber, password);
-        customerService.addCustomer(newCustomer);
-        System.out.println("Customer registered with ID: " + id);
-    }
-
-    private void customerLogin(Scanner scan) {
-        System.out.print("Enter customer ID: ");
-        String id = scan.nextLine();
-        System.out.print("Enter password: ");
-        String password = scan.nextLine();
-
-        Customer customer = customerService.fetchCustomer(id);
-        if (customer != null && customer.getPassword().equals(password)) {
-            loggedInCustomerId = id;
-            System.out.println("Login successful. Welcome, " + customer.getName() + "!");
-        } else {
-            System.out.println("Invalid credentials.");
-        }
-    }
-
-    private void adminLogin(Scanner scan) {
-        System.out.print("Enter admin ID: ");
-        String id = scan.nextLine();
-        System.out.print("Enter password: ");
-        String password = scan.nextLine();
-
-        // Assuming predefined admin credentials
-        if (id.equals("admin1") && password.equals("1234")) {
-            loggedInAdminId = id;
-            System.out.println("Admin login successful.");
-        } else {
-            System.out.println("Invalid admin credentials.");
-        }
-    }
-
-    private void customerMenu(Scanner scan) {
-        while (loggedInCustomerId != null) {
-            System.out.println("1. Record Electricity Usage");
-            System.out.println("2. Generate Monthly Bill");
-            System.out.println("3. View Payment History");
-            System.out.println("4. Make a Payment");
-            System.out.println("5. Logout");
-            System.out.print("Enter your option: ");
-            int option = scan.nextInt();
-            scan.nextLine(); // consume newline
-
-            switch (option) {
-                case 1:
-                    recordElectricityUsage(scan);
-                    break;
-                case 2:
-                    generateMonthlyBill(scan);
-                    break;
-                case 3:
-                    viewPaymentHistory(scan);
-                    break;
-                case 4:
-                    makePayment(scan);
-                    break;
-                case 5:
-                    loggedInCustomerId = null;
-                    System.out.println("Logged out.");
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
-            }
-        }
-    }
-
-    private void adminMenu(Scanner scan) {
-        while (loggedInAdminId != null) {
-            System.out.println("1. Add Customer");
-            System.out.println("2. View All Customers");
-            System.out.println("3. Edit Customer");
-            System.out.println("4. Delete Customer");
-            System.out.println("5. View Pending Bills");
-            System.out.println("6. Logout");
-            System.out.print("Enter your option: ");
-            int option = scan.nextInt();
-            scan.nextLine(); // consume newline
-
-            switch (option) {
-                case 1:
-                    customerRegister(scan);
-                    break;
-                case 2:
-                    viewAllCustomers();
-                    break;
-                case 3:
-                    editCustomer(scan);
-                    break;
-                case 4:
-                    deleteCustomer(scan);
-                    break;
-                case 5:
-                    viewPendingBills(scan);
-                    break;
-                case 6:
-                    loggedInAdminId = null;
-                    System.out.println("Logged out.");
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
-            }
-        }
-    }
-
-    private void recordElectricityUsage(Scanner scan) {
-        System.out.print("Enter month: ");
-        String month = scan.nextLine();
-        System.out.print("Enter electricity usage in kWh: ");
+    private void customerLogin() {
         try {
-            int usageInKwh = scan.nextInt();
-            scan.nextLine(); // consume newline
+            System.out.print("Enter Customer ID: ");
+            String customerId = scan.nextLine();
+
+            Customer customer = customerService.fetchCustomer(customerId);
+            if (customer != null) {
+                loggedInCustomerId = customerId;
+                System.out.println("Customer logged in successfully.");
+                customerMenu();
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error during customer login: " + e.getMessage());
+        }
+    }
+
+    private void customerRegister() {
+        try {
+            System.out.print("Enter new Customer ID: ");
+            String customerId = scan.nextLine();
+            System.out.print("Enter Customer Name: ");
+            String customerName = scan.nextLine();
+
+            Customer newCustomer = new Customer(customerId, customerName);
+            customerService.addCustomer(newCustomer);
+            System.out.println("Customer registered successfully.");
+        } catch (Exception e) {
+            System.err.println("Error during customer registration: " + e.getMessage());
+        }
+    }
+
+    private void customerMenu() {
+        while (true) {
+            try {
+                System.out.println("Customer Menu:");
+                System.out.println("1. Enter Usage");
+                System.out.println("2. Generate Monthly Bill");
+                System.out.println("3. View Previous Bills");
+                System.out.println("4. Make Payment");
+                System.out.println("5. View Payment History");
+                System.out.println("6. Logout");
+
+                int choice = scan.nextInt();
+                scan.nextLine(); // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        enterUsage();
+                        break;
+                    case 2:
+                        generateMonthlyBill();
+                        break;
+                    case 3:
+                        viewPreviousBills();
+                        break;
+                    case 4:
+                        makePayment();
+                        break;
+                    case 5:
+                        viewPaymentHistory();
+                        break;
+                    case 6:
+                        System.out.println("Customer logged out.");
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.err.println("Invalid input type. Please enter a number.");
+                scan.nextLine(); // Consume the incorrect input
+            } catch (Exception e) {
+                System.err.println("An unexpected error occurred: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void enterUsage() {
+        try {
+            System.out.print("Enter month: ");
+            String month = scan.nextLine();
+            System.out.print("Enter usage in kWh: ");
+            double usage = scan.nextDouble();
+
             Customer customer = customerService.fetchCustomer(loggedInCustomerId);
             if (customer != null) {
-                customer.addUsage(month, usageInKwh);
+                customer.addUsage(month, usage);
                 customerService.updateCustomer(customer);
-                System.out.println("Electricity usage recorded for " + month);
+                System.out.println("Usage recorded successfully.");
             } else {
                 System.out.println("Customer not found.");
             }
         } catch (InputMismatchException e) {
-            System.out.println("Invalid input. Please enter a numeric value for usage.");
-            scan.next(); // clear invalid input
+            System.err.println("Invalid input type. Please enter a valid usage.");
+            scan.nextLine(); // Consume the incorrect input
+        } catch (Exception e) {
+            System.err.println("Error while recording usage: " + e.getMessage());
         }
     }
 
-    private void generateMonthlyBill(Scanner scan) {
-        System.out.print("Enter month: ");
-        String month = scan.nextLine();
-        Customer customer = customerService.fetchCustomer(loggedInCustomerId);
-        if (customer != null) {
-            customer.generateBill(month);
-            customerService.updateCustomer(customer);
-            double billAmount = customer.getBill(month);
-            if (billAmount > 0) {
-                System.out.println("Bill for " + month + " is: $" + billAmount);
-            } else {
-                System.out.println("No bill generated for " + month);
-            }
-        } else {
-            System.out.println("Customer not found.");
-        }
-    }
+    private void generateMonthlyBill() {
+        try {
+            System.out.print("Enter month: ");
+            String month = scan.nextLine();
 
-    private void viewPaymentHistory(Scanner scan) {
-        Customer customer = customerService.fetchCustomer(loggedInCustomerId);
-        if (customer != null) {
-            System.out.println("Payment History:");
-            Map<String, Double> payments = customer.getPayments();
-            if (payments.isEmpty()) {
-                System.out.println("No payment history available.");
-            } else {
-                payments.forEach((month, amount) -> 
-                    System.out.println("Month: " + month + ", Amount Paid: $" + amount));
-            }
-        } else {
-            System.out.println("Customer not found.");
-        }
-    }
-
-    private void makePayment(Scanner scan) {
-        System.out.print("Enter month for payment: ");
-        String month = scan.nextLine();
-        Customer customer = customerService.fetchCustomer(loggedInCustomerId);
-        if (customer != null) {
-            double billAmount = customer.getBill(month);
-            if (billAmount > 0) {
-                System.out.println("Bill for " + month + ": $" + billAmount);
-                System.out.print("Enter payment amount: ");
-                try {
-                    double payment = scan.nextDouble();
-                    scan.nextLine(); // consume newline
-                    if (payment >= billAmount) {
-                        customer.makePayment(month, payment);
-                        customerService.updateCustomer(customer);
-                        System.out.println("Payment successful. Paid $" + payment + " for " + month);
-                    } else {
-                        System.out.println("Payment amount is less than the bill amount.");
-                    }
-                } catch (InputMismatchException e) {
-                    System.out.println("Invalid input. Please enter a numeric value for payment.");
-                    scan.next(); // clear invalid input
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                double billAmount = customer.generateBill(month);
+                if (billAmount > 0) {
+                    System.out.println("Bill generated for " + month + ": $" + billAmount);
+                } else {
+                    System.out.println("No usage found for " + month);
                 }
             } else {
-                System.out.println("No bill found for " + month);
+                System.out.println("Customer not found.");
             }
-        } else {
-            System.out.println("Customer not found.");
+        } catch (Exception e) {
+            System.err.println("Error while generating bill: " + e.getMessage());
+        }
+    }
+
+    private void viewPreviousBills() {
+        try {
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                System.out.println("Previous Bills:");
+                Map<String, Double> bills = customer.getPreviousBills();
+                bills.forEach((month, amount) -> {
+                    System.out.println("Month: " + month + ", Amount: $" + amount);
+                });
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error while viewing previous bills: " + e.getMessage());
+        }
+    }
+
+    private void makePayment() {
+        try {
+            System.out.print("Enter month: ");
+            String month = scan.nextLine();
+            System.out.print("Enter payment amount: ");
+            double payment = scan.nextDouble();
+
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                double amountDue = customer.generateBill(month); // Assume generateBill returns the amount due
+                if (payment >= amountDue) {
+                    customer.makePayment(month, payment);
+                    customerService.updateCustomer(customer);
+                    System.out.println("Payment successful.");
+                } else {
+                    System.out.println("Payment is less than the amount due.");
+                }
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (InputMismatchException e) {
+            System.err.println("Invalid input type. Please enter a valid amount.");
+            scan.nextLine(); // Consume the incorrect input
+        } catch (Exception e) {
+            System.err.println("Error while processing payment: " + e.getMessage());
+        }
+    }
+
+    private void viewPaymentHistory() {
+        try {
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                System.out.println("Payment History:");
+                Map<String, Double> payments = customer.getPaymentHistory();
+                payments.forEach((month, amount) -> {
+                    System.out.println("Month: " + month + ", Amount: $" + amount);
+                });
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error while viewing payment history: " + e.getMessage());
+        }
+    }
+
+    private void addCustomer() {
+        try {
+            System.out.print("Enter Customer ID: ");
+            String customerId = scan.nextLine();
+            System.out.print("Enter Customer Name: ");
+            String customerName = scan.nextLine();
+
+            Customer customer = new Customer(customerId, customerName);
+            customerService.addCustomer(customer);
+            System.out.println("Customer added successfully.");
+        } catch (Exception e) {
+            System.err.println("Error while adding customer: " + e.getMessage());
         }
     }
 
     private void viewAllCustomers() {
-        System.out.println("Customer List:");
-        customerService.fetchAllCustomers().forEach(customer ->
-            System.out.println("ID: " + customer.getId() + ", Name: " + customer.getName() + 
-                               ", Meter Number: " + customer.getMeterNumber()));
-    }
-
-    private void editCustomer(Scanner scan) {
-        System.out.print("Enter Customer ID to edit: ");
-        String id = scan.nextLine();
-        Customer customer = customerService.fetchCustomer(id);
-        if (customer != null) {
-            System.out.print("Enter new address: ");
-            String newAddress = scan.nextLine();
-            System.out.print("Enter new meter number: ");
-            String newMeterNumber = scan.nextLine();
-
-            customer.setAddress(newAddress);
-            customer.setMeterNumber(newMeterNumber);
-            customerService.updateCustomer(customer);
-
-            System.out.println("Customer details updated successfully.");
-        } else {
-            System.out.println("Customer not found.");
+        try {
+            System.out.println("All Customers:");
+            customerService.getAllCustomers().forEach(customer -> {
+                System.out.println("ID: " + customer.getId() + ", Name: " + customer.getName());
+            });
+        } catch (Exception e) {
+            System.err.println("Error while viewing customers: " + e.getMessage());
         }
     }
 
-    private void deleteCustomer(Scanner scan) {
-        System.out.print("Enter Customer ID to delete: ");
-        String id = scan.nextLine();
-        Customer customer = customerService.fetchCustomer(id);
-        if (customer != null) {
-            customerService.deleteCustomer(id);
-            System.out.println("Customer deleted successfully.");
-        } else {
-            System.out.println("Customer not found.");
-        }
-    }
+    private void editCustomer() {
+        try {
+            System.out.print("Enter Customer ID to edit: ");
+            String customerId = scan.nextLine();
 
-    private void viewPendingBills(Scanner scan) {
-        System.out.print("Enter Customer ID to view pending bills: ");
-        String id = scan.nextLine();
-        Customer customer = customerService.fetchCustomer(id);
-        if (customer != null) {
-            double pendingAmount = customer.getPendingBillAmount();
-            if (pendingAmount > 0) {
-                System.out.println("Pending amount for " + customer.getName() + ": $" + pendingAmount);
+            Customer customer = customerService.fetchCustomer(customerId);
+            if (customer != null) {
+                System.out.print("Enter new Customer Name: ");
+                String customerName = scan.nextLine();
+
+                customer.setName(customerName);
+                customerService.updateCustomer(customer);
+                System.out.println("Customer updated successfully.");
             } else {
-                System.out.println("No pending bills for " + customer.getName());
+                System.out.println("Customer not found.");
             }
-        } else {
-            System.out.println("Customer not found.");
+        } catch (Exception e) {
+            System.err.println("Error while editing customer: " + e.getMessage());
+        }
+    }
+
+    private void deleteCustomer() {
+        try {
+            System.out.print("Enter Customer ID to delete: ");
+            String customerId = scan.nextLine();
+
+            Customer customer = customerService.fetchCustomer(customerId);
+            if (customer != null) {
+                customerService.deleteCustomer(customerId);
+                System.out.println("Customer deleted successfully.");
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error while deleting customer: " + e.getMessage());
+        }
+    }
+
+    private void viewPendingBills() {
+        try {
+            System.out.print("Enter Customer ID to view pending bills: ");
+            String customerId = scan.nextLine();
+
+            Customer customer = customerService.fetchCustomer(customerId);
+            if (customer != null) {
+                Map<String, Double> pendingBills = customer.getPendingBills();
+                if (pendingBills.isEmpty()) {
+                    System.out.println("No pending bills.");
+                } else {
+                    System.out.println("Pending Bills:");
+                    pendingBills.forEach((month, amount) -> {
+                        System.out.println("Month: " + month + ", Amount: $" + amount);
+                    });
+                }
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error while viewing pending bills: " + e.getMessage());
         }
     }
 }

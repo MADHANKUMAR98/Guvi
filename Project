@@ -8,6 +8,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.InputMismatchException;
+import java.util.NoSuchElementException;
+import java.util.IllegalArgumentException;
+import java.util.NullPointerException;
+import java.util.ArithmeticException;
+import java.util.IndexOutOfBoundsException;
 
 public class Presentation {
 
@@ -19,38 +25,38 @@ public class Presentation {
 
     public void present() {
         System.out.println("Welcome to the Electricity Billing System!");
-
         while (true) {
             try {
                 System.out.println("1. Admin Login");
                 System.out.println("2. Customer Login");
                 System.out.println("3. Customer Register");
                 System.out.println("4. Exit");
-
                 System.out.print("Enter your choice: ");
                 int choice = scan.nextInt();
                 scan.nextLine(); // Consume newline
 
                 switch (choice) {
-                    case 1: // Admin Login
+                    case 1:
                         adminLogin();
                         break;
-                    case 2: // Customer Login
+                    case 2:
                         customerLogin();
                         break;
-                    case 3: // Customer Register
+                    case 3:
                         customerRegister();
                         break;
-                    case 4: // Exit
+                    case 4:
                         System.out.println("Exiting...");
                         scan.close();
                         return;
                     default:
                         System.out.println("Invalid choice. Please try again.");
                 }
-            } catch (Exception e) {
-                System.out.println("An error occurred: " + e.getMessage());
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input type. Please enter a number.");
                 scan.nextLine(); // Clear scanner buffer
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }
@@ -83,36 +89,37 @@ public class Presentation {
                 System.out.println("4. Delete Customer");
                 System.out.println("5. View Pending Bills");
                 System.out.println("6. Logout");
-
                 System.out.print("Enter your choice: ");
                 int choice = scan.nextInt();
                 scan.nextLine(); // Consume newline
 
                 switch (choice) {
-                    case 1: // Add Customer
+                    case 1:
                         addCustomer();
                         break;
-                    case 2: // View All Customers
+                    case 2:
                         viewAllCustomers();
                         break;
-                    case 3: // Edit Customer
+                    case 3:
                         editCustomer();
                         break;
-                    case 4: // Delete Customer
+                    case 4:
                         deleteCustomer();
                         break;
-                    case 5: // View Pending Bills
+                    case 5:
                         viewPendingBills();
                         break;
-                    case 6: // Logout
+                    case 6:
                         isAdminLoggedIn = false;
                         break;
                     default:
                         System.out.println("Invalid choice. Please try again.");
                 }
-            } catch (Exception e) {
-                System.out.println("An error occurred in the admin menu: " + e.getMessage());
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input type. Please enter a number.");
                 scan.nextLine(); // Clear scanner buffer
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }
@@ -133,10 +140,11 @@ public class Presentation {
 
             Customer newCustomer = new Customer(id, name, address, meterNumber, password);
             customerService.addCustomer(newCustomer);
-
             System.out.println("Customer added with ID: " + id);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid input. Please try again.");
         } catch (Exception e) {
-            System.out.println("An error occurred while adding a customer: " + e.getMessage());
+            System.out.println("An error occurred while adding the customer: " + e.getMessage());
         }
     }
 
@@ -148,7 +156,7 @@ public class Presentation {
                 System.out.println(customer);
             }
         } catch (Exception e) {
-            System.out.println("An error occurred while viewing all customers: " + e.getMessage());
+            System.out.println("An error occurred while fetching customers: " + e.getMessage());
         }
     }
 
@@ -156,8 +164,8 @@ public class Presentation {
         try {
             System.out.print("Enter customer ID to edit: ");
             String customerId = scan.nextLine();
-            Customer customer = customerService.fetchCustomer(customerId);
 
+            Customer customer = customerService.fetchCustomer(customerId);
             if (customer != null) {
                 System.out.println("Current Information: " + customer);
 
@@ -190,6 +198,8 @@ public class Presentation {
             } else {
                 System.out.println("Customer not found.");
             }
+        } catch (NoSuchElementException e) {
+            System.out.println("Invalid customer ID.");
         } catch (Exception e) {
             System.out.println("An error occurred while editing the customer: " + e.getMessage());
         }
@@ -199,8 +209,11 @@ public class Presentation {
         try {
             System.out.print("Enter customer ID to delete: ");
             String customerId = scan.nextLine();
+
             customerService.deleteCustomer(customerId);
             System.out.println("Customer deleted.");
+        } catch (NoSuchElementException e) {
+            System.out.println("Invalid customer ID.");
         } catch (Exception e) {
             System.out.println("An error occurred while deleting the customer: " + e.getMessage());
         }
@@ -210,11 +223,12 @@ public class Presentation {
         try {
             System.out.print("Enter customer ID to view pending bills: ");
             String customerId = scan.nextLine();
-            Customer customer = customerService.fetchCustomer(customerId);
 
+            Customer customer = customerService.fetchCustomer(customerId);
             if (customer != null) {
                 System.out.println("Pending Bills:");
                 Map<String, Double> bills = customer.getBills();
+
                 bills.forEach((month, amount) -> {
                     if (amount > 0) {
                         System.out.println("Month: " + month + ", Amount: Rs " + amount);
@@ -223,6 +237,10 @@ public class Presentation {
             } else {
                 System.out.println("Customer not found.");
             }
+        } catch (NoSuchElementException e) {
+            System.out.println("Invalid customer ID.");
+        } catch (NullPointerException e) {
+            System.out.println("No pending bills found for this customer.");
         } catch (Exception e) {
             System.out.println("An error occurred while viewing pending bills: " + e.getMessage());
         }
@@ -236,7 +254,6 @@ public class Presentation {
             String password = scan.nextLine();
 
             Customer customer = customerService.fetchCustomer(customerId);
-
             if (customer != null && customer.getPassword().equals(password)) {
                 loggedInCustomerId = customerId;
                 isCustomerLoggedIn = true;
@@ -244,6 +261,10 @@ public class Presentation {
             } else {
                 System.out.println("Invalid customer credentials.");
             }
+        } catch (NoSuchElementException e) {
+            System.out.println("Invalid customer ID.");
+        } catch (NullPointerException e) {
+            System.out.println("Customer not found.");
         } catch (Exception e) {
             System.out.println("An error occurred during customer login: " + e.getMessage());
         }
@@ -251,11 +272,6 @@ public class Presentation {
 
     private void customerRegister() {
         try {
-            if (isCustomerLoggedIn) {
-                System.out.println("You are already logged in.");
-                return;
-            }
-
             System.out.print("Enter name: ");
             String name = scan.nextLine();
             System.out.print("Enter address: ");
@@ -270,8 +286,10 @@ public class Presentation {
 
             Customer newCustomer = new Customer(id, name, address, meterNumber, password);
             customerService.addCustomer(newCustomer);
-
+            System.out.println("Customer registered with
             System.out.println("Customer registered with ID: " + id);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid input. Please try again.");
         } catch (Exception e) {
             System.out.println("An error occurred during customer registration: " + e.getMessage());
         }
@@ -281,117 +299,153 @@ public class Presentation {
         while (isCustomerLoggedIn) {
             try {
                 System.out.println("Customer Menu:");
-                System.out.println("1. Record Electricity Usage");
-                System.out.println("2. Generate Monthly Bill");
-                System.out.println("3. View Bill History");
-                System.out.println("4. Make a Payment");
-                System.out.println("5. View Payment History");
-                System.out.println("6. Logout");
-
+                System.out.println("1. Enter Electricity Usage");
+                System.out.println("2. View Previous Bills");
+                System.out.println("3. Make Payment");
+                System.out.println("4. View Payment History");
+                System.out.println("5. Logout");
                 System.out.print("Enter your choice: ");
                 int choice = scan.nextInt();
-                scan.nextLine(); // Consume
                 scan.nextLine(); // Consume newline
 
                 switch (choice) {
-                    case 1: // Record Electricity Usage
-                        recordElectricityUsage();
+                    case 1:
+                        enterElectricityUsage();
                         break;
-                    case 2: // Generate Monthly Bill
-                        generateMonthlyBill();
+                    case 2:
+                        viewPreviousBills();
                         break;
-                    case 3: // View Bill History
-                        viewBillHistory();
-                        break;
-                    case 4: // Make a Payment
+                    case 3:
                         makePayment();
                         break;
-                    case 5: // View Payment History
+                    case 4:
                         viewPaymentHistory();
                         break;
-                    case 6: // Logout
+                    case 5:
                         isCustomerLoggedIn = false;
                         loggedInCustomerId = null;
                         break;
                     default:
                         System.out.println("Invalid choice. Please try again.");
                 }
-            } catch (Exception e) {
-                System.out.println("An error occurred in the customer menu: " + e.getMessage());
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input type. Please enter a number.");
                 scan.nextLine(); // Clear scanner buffer
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
             }
         }
     }
 
-    private void recordElectricityUsage() {
+    private void enterElectricityUsage() {
         try {
-            System.out.print("Enter month (e.g., January): ");
+            System.out.print("Enter month (e.g., 'January'): ");
             String month = scan.nextLine();
             System.out.print("Enter electricity used (in kWh): ");
-            double electricityUsed = scan.nextDouble();
+            double usage = scan.nextDouble();
+            scan.nextLine(); // Consume newline
 
-            customerService.recordElectricityUsage(loggedInCustomerId, month, electricityUsed);
-            System.out.println("Electricity usage recorded for " + month + ".");
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                double billAmount = usage * 5; // Example calculation, Rs 5 per kWh
+                customer.getBills().put(month, billAmount);
+                customerService.updateCustomer(customer);
+                System.out.println("Electricity usage recorded. Bill for " + month + ": Rs " + billAmount);
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (NullPointerException e) {
+            System.out.println("Customer record is incomplete or missing.");
+        } catch (ArithmeticException e) {
+            System.out.println("An arithmetic error occurred while calculating the bill. Please try again.");
         } catch (Exception e) {
-            System.out.println("An error occurred while recording electricity usage: " + e.getMessage());
-            scan.nextLine(); // Clear scanner buffer
+            System.out.println("An error occurred while entering electricity usage: " + e.getMessage());
         }
     }
 
-    private void generateMonthlyBill() {
+    private void viewPreviousBills() {
         try {
-            System.out.print("Enter month to generate bill for: ");
-            String month = scan.nextLine();
-
-            double billAmount = customerService.generateBill(loggedInCustomerId, month);
-            System.out.println("Generated bill for " + month + ": Rs " + billAmount);
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                System.out.println("Previous Bills:");
+                for (Map.Entry<String, Double> entry : customer.getBills().entrySet()) {
+                    System.out.println("Month: " + entry.getKey() + ", Amount: Rs " + entry.getValue());
+                }
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (NullPointerException e) {
+            System.out.println("Customer record is incomplete or missing.");
         } catch (Exception e) {
-            System.out.println("An error occurred while generating the bill: " + e.getMessage());
-        }
-    }
-
-    private void viewBillHistory() {
-        try {
-            System.out.println("Bill History:");
-            Map<String, Double> bills = customerService.fetchBillHistory(loggedInCustomerId);
-            bills.forEach((month, amount) -> System.out.println("Month: " + month + ", Amount: Rs " + amount));
-        } catch (Exception e) {
-            System.out.println("An error occurred while viewing the bill history: " + e.getMessage());
+            System.out.println("An error occurred while viewing previous bills: " + e.getMessage());
         }
     }
 
     private void makePayment() {
         try {
-            System.out.print("Enter month to pay for: ");
-            String month = scan.nextLine();
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                System.out.println("Pending Bills:");
+                for (Map.Entry<String, Double> entry : customer.getBills().entrySet()) {
+                    if (entry.getValue() > 0) {
+                        System.out.println("Month: " + entry.getKey() + ", Amount: Rs " + entry.getValue());
+                    }
+                }
 
-            double amountDue = customerService.fetchBill(loggedInCustomerId, month);
-            if (amountDue > 0) {
-                System.out.print("Enter payment amount: ");
-                double paymentAmount = scan.nextDouble();
+                System.out.print("Enter the month you want to pay for: ");
+                String month = scan.nextLine();
 
-                if (paymentAmount <= amountDue) {
-                    customerService.makePayment(loggedInCustomerId, month, paymentAmount);
-                    System.out.println("Payment of Rs " + paymentAmount + " made for " + month + ".");
+                if (customer.getBills().containsKey(month)) {
+                    double amountDue = customer.getBills().get(month);
+                    if (amountDue > 0) {
+                        System.out.print("Enter payment amount: ");
+                        double payment = scan.nextDouble();
+                        scan.nextLine(); // Consume newline
+
+                        if (payment >= amountDue) {
+                            customer.getBills().put(month, 0.0);
+                            customer.getPaymentHistory().put(month, amountDue);
+                            customerService.updateCustomer(customer);
+                            System.out.println("Payment successful. Full payment for " + month + " is made.");
+                        } else {
+                            System.out.println("Insufficient payment. Please pay the full amount.");
+                        }
+                    } else {
+                        System.out.println("No pending bill for the selected month.");
+                    }
                 } else {
-                    System.out.println("Payment exceeds the due amount. Please try again.");
+                    System.out.println("Invalid month selected.");
                 }
             } else {
-                System.out.println("No amount due for " + month + ".");
+                System.out.println("Customer not found.");
             }
-        } catch (Exception e) {
-            System.out.println("An error occurred while making the payment: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input type. Please enter a valid number.");
             scan.nextLine(); // Clear scanner buffer
+        } catch (NullPointerException e) {
+            System.out.println("Customer record is incomplete or missing.");
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("Invalid month index provided.");
+        } catch (Exception e) {
+            System.out.println("An error occurred while processing the payment: " + e.getMessage());
         }
     }
 
     private void viewPaymentHistory() {
         try {
-            System.out.println("Payment History:");
-            Map<String, Double> payments = customerService.fetchPaymentHistory(loggedInCustomerId);
-            payments.forEach((month, amount) -> System.out.println("Month: " + month + ", Paid: Rs " + amount));
+            Customer customer = customerService.fetchCustomer(loggedInCustomerId);
+            if (customer != null) {
+                System.out.println("Payment History:");
+                for (Map.Entry<String, Double> entry : customer.getPaymentHistory().entrySet()) {
+                    System.out.println("Month: " + entry.getKey() + ", Paid Amount: Rs " + entry.getValue());
+                }
+            } else {
+                System.out.println("Customer not found.");
+            }
+        } catch (NullPointerException e) {
+            System.out.println("Customer record is incomplete or missing.");
         } catch (Exception e) {
-            System.out.println("An error occurred while viewing the payment history: " + e.getMessage());
+            System.out.println("An error occurred while viewing payment history: " + e.getMessage());
         }
     }
 }

@@ -449,3 +449,12 @@ public class Presentation {
         }
     }
 }
+System.out.println("********************************************");
+System.out.println("*                                          *");
+System.out.println("*       WELCOME TO THE ELECTRICITY         *");
+System.out.println("*         BILLING SYSTEM                   *");
+System.out.println("*                                          *");
+System.out.println("********************************************");
+System.out.println("**          Powering Your Future          **");
+System.out.println("********************************************");
+System.out.println();

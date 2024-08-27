@@ -4,196 +4,192 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Customer {
-
     private String id;
     private String name;
     private String address;
     private String meterNumber;
     private String password;
 
-    private Map<String, Integer> usage; // Stores monthly usage
-    private Map<String, Double> bills; // Stores monthly bills
-    private Map<String, PaymentDetails> payments; // New: Stores payment details
+    private Map<String, Usage> usageMap;
+    private Map<String, Bill> billMap;
+    private Map<String, Payment> paymentMap;
 
-    // Constructor
     public Customer(String id, String name, String address, String meterNumber, String password) {
         this.id = id;
         this.name = name;
         this.address = address;
         this.meterNumber = meterNumber;
         this.password = password;
-        this.bills = new HashMap<>();
-        this.usage = new HashMap<>();
-        this.payments = new HashMap<>(); // Initialize payment details map
+        this.usageMap = new HashMap<>();
+        this.billMap = new HashMap<>();
+        this.paymentMap = new HashMap<>();
     }
 
-    // Getters and Setters (include all attributes as necessary)
-
-    // New method to add payment details
-    public void addPayment(String month, String paymentId, String timestamp, boolean isPaid) {
-        PaymentDetails paymentDetails = new PaymentDetails(paymentId, timestamp, isPaid);
-        payments.put(month, paymentDetails);
-    }
-
-    // New method to check payment status
-    public boolean isPaymentMade(String month) {
-        PaymentDetails details = payments.get(month);
-        return details != null && details.isPaid();
-    }
-
-    // Method to get payment history
-    public Map<String, PaymentDetails> getPaymentHistory() {
-        return payments;
-    }
+    // Getters and Setters...
 }
 
-// New inner class to encapsulate payment details
-class PaymentDetails {
+package pojo;
+
+public class Bill {
+    private String billId;
+    private String month;
+    private double amount;
+
+    public Bill(String billId, String month, double amount) {
+        this.billId = billId;
+        this.month = month;
+        this.amount = amount;
+    }
+
+    // Getters and Setters...
+}
+package pojo;
+
+import java.time.LocalDateTime;
+
+public class Payment {
     private String paymentId;
-    private String timestamp;
+    private String billId;
+    private double amountPaid;
+    private LocalDateTime timestamp;
     private boolean isPaid;
 
-    public PaymentDetails(String paymentId, String timestamp, boolean isPaid) {
+    public Payment(String paymentId, String billId, double amountPaid, LocalDateTime timestamp, boolean isPaid) {
         this.paymentId = paymentId;
+        this.billId = billId;
+        this.amountPaid = amountPaid;
         this.timestamp = timestamp;
         this.isPaid = isPaid;
     }
 
-    public String getPaymentId() {
-        return paymentId;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public boolean isPaid() {
-        return isPaid;
-    }
-
-    // Optional: Override toString for easier display of payment details
-    @Override
-    public String toString() {
-        return "Payment ID: " + paymentId + ", Timestamp: " + timestamp + ", Paid: " + (isPaid ? "Yes" : "No");
-    }
+    // Getters and Setters...
 }
-public interface CustomerService {
-    // Existing methods...
-    void makePayment(String customerId, String month, double amount);
-    Map<String, PaymentDetails> viewPaymentHistory(String customerId); // Updated to use PaymentDetails
-    boolean checkPaymentStatus(String customerId, String month); // New method to check payment status
-}
+
+package dao;
+
+import pojo.Customer;
+
+import java.util.HashMap;
 import java.util.Map;
+
+public class CustomerDAO {
+    private Map<String, Customer> customerMap = new HashMap<>();
+
+    public void addCustomer(Customer customer) {
+        customerMap.put(customer.getId(), customer);
+    }
+
+    public Customer getCustomerById(String id) {
+        return customerMap.get(id);
+    }
+
+    public Map<String, Customer> getAllCustomers() {
+        return customerMap;
+    }
+
+    public void updateCustomer(Customer customer) {
+        customerMap.put(customer.getId(), customer);
+    }
+
+    public void deleteCustomer(String id) {
+        customerMap.remove(id);
+    }
+}
+
+package service;
+
+import pojo.Customer;
+import pojo.Usage;
+import pojo.Bill;
+import pojo.Payment;
+
+public interface CustomerService {
+    void recordUsage(Customer customer, String month, int electricityUsed);
+    void generateBill(Customer customer, String month, double amount);
+    void makePayment(Customer customer, String billId, double amountPaid);
+    // Additional service methods...
+}
+
+package service;
+
+import pojo.Bill;
+import pojo.Customer;
+import pojo.Payment;
+import pojo.Usage;
+
+import dao.CustomerDAO;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class CustomerServiceImpl implements CustomerService {
-    private Map<String, Customer> customerMap;
-
-    public CustomerServiceImpl() {
-        this.customerMap = new HashMap<>();
-    }
-
-    // Existing methods...
+    private CustomerDAO customerDAO = new CustomerDAO();
 
     @Override
-    public void makePayment(String customerId, String month, double amount) {
-        Customer customer = customerMap.get(customerId);
-        if (customer != null) {
-            // Generate payment ID and timestamp
-            String paymentId = UUID.randomUUID().toString().substring(0, 8);
-            String timestamp = java.time.LocalDateTime.now().toString();
-
-            // Store the payment details
-            customer.addPayment(month, paymentId, timestamp, true); // 'true' indicates payment made
-            System.out.println("Payment of $" + amount + " for " + month + " recorded with Payment ID: " + paymentId + " at " + timestamp);
-        }
+    public void recordUsage(Customer customer, String month, int electricityUsed) {
+        String usageId = UUID.randomUUID().toString();
+        Usage usage = new Usage(usageId, month, electricityUsed);
+        customer.getUsageMap().put(usageId, usage);
+        customerDAO.updateCustomer(customer);
     }
 
     @Override
-    public Map<String, PaymentDetails> viewPaymentHistory(String customerId) {
-        Customer customer = customerMap.get(customerId);
-        if (customer != null) {
-            return customer.getPaymentHistory();
+    public void generateBill(Customer customer, String month, double amount) {
+        String billId = UUID.randomUUID().toString();
+        Bill bill = new Bill(billId, month, amount);
+        customer.getBillMap().put(billId, bill);
+        customerDAO.updateCustomer(customer);
+    }
+
+    @Override
+    public void makePayment(Customer customer, String billId, double amountPaid) {
+        String paymentId = UUID.randomUUID().toString();
+        LocalDateTime timestamp = LocalDateTime.now();
+        Payment payment = new Payment(paymentId, billId, amountPaid, timestamp, true);
+        customer.getPaymentMap().put(paymentId, payment);
+        customerDAO.updateCustomer(customer);
+    }
+    
+    // Additional business logic...
+}
+package presentation;
+
+import pojo.Bill;
+import pojo.Customer;
+import pojo.Payment;
+import service.CustomerService;
+import service.CustomerServiceImpl;
+
+import java.util.Map;
+import java.util.Scanner;
+
+public class AdminMenu {
+    private CustomerService customerService = new CustomerServiceImpl();
+
+    public void generateBillForCustomer(Customer customer) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter month for which bill is to be generated:");
+        String month = scanner.nextLine();
+        System.out.println("Enter amount:");
+        double amount = scanner.nextDouble();
+        
+        customerService.generateBill(customer, month, amount);
+        System.out.println("Bill generated successfully with unique Bill ID.");
+    }
+
+    public void viewPaymentHistory(Customer customer) {
+        Map<String, Payment> payments = customer.getPaymentMap();
+        if (payments.isEmpty()) {
+            System.out.println("No payments found.");
         } else {
-            throw new IllegalArgumentException("Customer not found");
+            for (Payment payment : payments.values()) {
+                System.out.println("Payment ID: " + payment.getPaymentId());
+                System.out.println("Bill ID: " + payment.getBillId());
+                System.out.println("Amount Paid: " + payment.getAmountPaid());
+                System.out.println("Timestamp: " + payment.getTimestamp());
+                System.out.println("Paid: " + (payment.isPaid() ? "Yes" : "No"));
+                System.out.println("-------------------------------");
+            }
         }
-    }
-
-    @Override
-    public boolean checkPaymentStatus(String customerId, String month) {
-        Customer customer = customerMap.get(customerId);
-        if (customer != null) {
-            return customer.isPaymentMade(month);
-        } else {
-            throw new IllegalArgumentException("Customer not found");
-        }
-    }
-}
-private void adminMenu() {
-    while (isAdminLoggedIn) {
-        System.out.println("Admin Menu:");
-        System.out.println("1. Add New Customer");
-        System.out.println("2. View All Customers");
-        System.out.println("3. Edit Customer");
-        System.out.println("4. Delete Customer");
-        System.out.println("5. View Pending Bills");
-        System.out.println("6. Generate Bill for Customer");
-        System.out.println("7. View Payment History"); // New option for viewing payment history
-        System.out.println("8. Check Payment Status"); // New option for checking payment status
-        System.out.println("9. Logout");
-        System.out.print("Enter your choice: ");
-
-        int choice;
-        try {
-            choice = scan.nextInt();
-            scan.nextLine(); // Consume newline
-        } catch (Exception e) {
-            System.out.println("Invalid input. Please enter a number.");
-            scan.nextLine(); // Consume invalid input
-            continue;
-        }
-
-        switch (choice) {
-            // Existing cases...
-            case 7:
-                viewPaymentHistoryForAdmin();
-                break;
-            case 8:
-                checkPaymentStatusForAdmin();
-                break;
-            case 9:
-                isAdminLoggedIn = false;
-                System.out.println("Logged out successfully.");
-                break;
-            default:
-                System.out.println("Invalid choice. Please try again.");
-        }
-    }
-}
-private void viewPaymentHistoryForAdmin() {
-    try {
-        System.out.print("Enter customer ID to view payment history: ");
-        String customerId = scan.nextLine();
-        Map<String, PaymentDetails> paymentHistory = customerService.viewPaymentHistory(customerId);
-
-        System.out.println("Payment History for Customer ID: " + customerId);
-        for (Map.Entry<String, PaymentDetails> entry : paymentHistory.entrySet()) {
-            System.out.println("Month: " + entry.getKey() + ", " + entry.getValue());
-        }
-    } catch (Exception e) {
-        System.out.println("Error occurred while fetching payment history: " + e.getMessage());
-    }
-}
-
-private void checkPaymentStatusForAdmin() {
-    try {
-        System.out.print("Enter customer ID: ");
-        String customerId = scan.nextLine();
-        System.out.print("Enter month to check payment status: ");
-        String month = scan.nextLine();
-        boolean isPaid = customerService.checkPaymentStatus(customerId, month);
-        System.out.println("Payment status for " + month + ": " + (isPaid ? "Paid" : "Not Paid"));
-    } catch (Exception e) {
-        System.out.println("Error occurred while checking payment status: " + e.getMessage());
     }
 }

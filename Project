@@ -1,195 +1,65 @@
-package pojo;
+CREATE TABLE Role_Table (
+    Role_Id INT PRIMARY KEY,
+    Role_Description VARCHAR2(10) NOT NULL
+);
 
-import java.util.HashMap;
-import java.util.Map;
+CREATE TABLE Login_Table (
+    User_Id VARCHAR2(10) PRIMARY KEY,
+    Password VARCHAR2(10) NOT NULL,
+    Role_Id INT,
+    FOREIGN KEY (Role_Id) REFERENCES Role_Table(Role_Id)
+);
 
-public class Customer {
-    private String id;
-    private String name;
-    private String address;
-    private String meterNumber;
-    private String password;
+CREATE TABLE Address_Table (
+    Address_Id VARCHAR2(10) PRIMARY KEY,
+    House_Number VARCHAR2(10),
+    Street_Name VARCHAR2(50),
+    Area_Name VARCHAR2(50),
+    City_Name VARCHAR2(50),
+    State_Name VARCHAR2(50),
+    Pin_Code VARCHAR2(10)
+);
 
-    private Map<String, Usage> usageMap;
-    private Map<String, Bill> billMap;
-    private Map<String, Payment> paymentMap;
+CREATE TABLE User_Table (
+    User_Id VARCHAR2(10) PRIMARY KEY,
+    User_Name VARCHAR2(20) NOT NULL,
+    Address_Id VARCHAR2(10),
+    Phone_Number VARCHAR2(15),
+    Email_Address VARCHAR2(30),
+    Account_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Address_Id) REFERENCES Address_Table(Address_Id)
+);
+CREATE TABLE Usage_Table (
+    Usage_Id VARCHAR2(10) PRIMARY KEY,
+    User_Id VARCHAR2(10),
+    Month VARCHAR2(10),
+    Usage_Reading INT,
+    Admin_Id VARCHAR2(10),
+    Usage_Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (User_Id) REFERENCES User_Table(User_Id),
+    FOREIGN KEY (Admin_Id) REFERENCES User_Table(User_Id)
+);
+CREATE TABLE Billing_Table (
+    Bill_Id VARCHAR2(10) PRIMARY KEY,
+    Usage_Id VARCHAR2(10),
+    Amount DECIMAL(10, 2),
+    Bill_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Usage_Id) REFERENCES Usage_Table(Usage_Id)
+);
 
-    public Customer(String id, String name, String address, String meterNumber, String password) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-        this.meterNumber = meterNumber;
-        this.password = password;
-        this.usageMap = new HashMap<>();
-        this.billMap = new HashMap<>();
-        this.paymentMap = new HashMap<>();
-    }
+CREATE TABLE Payment_Method_Table (
+    Payment_Method_Id INT PRIMARY KEY,
+    Payment_Method_Description VARCHAR2(20) NOT NULL
+);
 
-    // Getters and Setters...
-}
+CREATE TABLE Payment_Table (
+    Payment_Id VARCHAR2(10) PRIMARY KEY,
+    Bill_Id VARCHAR2(10),
+    Payment_Method_Id INT,
+    Payment_Made_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Bill_Id) REFERENCES Billing_Table(Bill_Id),
+    FOREIGN KEY (Payment_Method_Id) REFERENCES Payment_Method_Table(Payment_Method_Id)
+);
 
-package pojo;
 
-public class Bill {
-    private String billId;
-    private String month;
-    private double amount;
 
-    public Bill(String billId, String month, double amount) {
-        this.billId = billId;
-        this.month = month;
-        this.amount = amount;
-    }
-
-    // Getters and Setters...
-}
-package pojo;
-
-import java.time.LocalDateTime;
-
-public class Payment {
-    private String paymentId;
-    private String billId;
-    private double amountPaid;
-    private LocalDateTime timestamp;
-    private boolean isPaid;
-
-    public Payment(String paymentId, String billId, double amountPaid, LocalDateTime timestamp, boolean isPaid) {
-        this.paymentId = paymentId;
-        this.billId = billId;
-        this.amountPaid = amountPaid;
-        this.timestamp = timestamp;
-        this.isPaid = isPaid;
-    }
-
-    // Getters and Setters...
-}
-
-package dao;
-
-import pojo.Customer;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class CustomerDAO {
-    private Map<String, Customer> customerMap = new HashMap<>();
-
-    public void addCustomer(Customer customer) {
-        customerMap.put(customer.getId(), customer);
-    }
-
-    public Customer getCustomerById(String id) {
-        return customerMap.get(id);
-    }
-
-    public Map<String, Customer> getAllCustomers() {
-        return customerMap;
-    }
-
-    public void updateCustomer(Customer customer) {
-        customerMap.put(customer.getId(), customer);
-    }
-
-    public void deleteCustomer(String id) {
-        customerMap.remove(id);
-    }
-}
-
-package service;
-
-import pojo.Customer;
-import pojo.Usage;
-import pojo.Bill;
-import pojo.Payment;
-
-public interface CustomerService {
-    void recordUsage(Customer customer, String month, int electricityUsed);
-    void generateBill(Customer customer, String month, double amount);
-    void makePayment(Customer customer, String billId, double amountPaid);
-    // Additional service methods...
-}
-
-package service;
-
-import pojo.Bill;
-import pojo.Customer;
-import pojo.Payment;
-import pojo.Usage;
-
-import dao.CustomerDAO;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-public class CustomerServiceImpl implements CustomerService {
-    private CustomerDAO customerDAO = new CustomerDAO();
-
-    @Override
-    public void recordUsage(Customer customer, String month, int electricityUsed) {
-        String usageId = UUID.randomUUID().toString();
-        Usage usage = new Usage(usageId, month, electricityUsed);
-        customer.getUsageMap().put(usageId, usage);
-        customerDAO.updateCustomer(customer);
-    }
-
-    @Override
-    public void generateBill(Customer customer, String month, double amount) {
-        String billId = UUID.randomUUID().toString();
-        Bill bill = new Bill(billId, month, amount);
-        customer.getBillMap().put(billId, bill);
-        customerDAO.updateCustomer(customer);
-    }
-
-    @Override
-    public void makePayment(Customer customer, String billId, double amountPaid) {
-        String paymentId = UUID.randomUUID().toString();
-        LocalDateTime timestamp = LocalDateTime.now();
-        Payment payment = new Payment(paymentId, billId, amountPaid, timestamp, true);
-        customer.getPaymentMap().put(paymentId, payment);
-        customerDAO.updateCustomer(customer);
-    }
-    
-    // Additional business logic...
-}
-package presentation;
-
-import pojo.Bill;
-import pojo.Customer;
-import pojo.Payment;
-import service.CustomerService;
-import service.CustomerServiceImpl;
-
-import java.util.Map;
-import java.util.Scanner;
-
-public class AdminMenu {
-    private CustomerService customerService = new CustomerServiceImpl();
-
-    public void generateBillForCustomer(Customer customer) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter month for which bill is to be generated:");
-        String month = scanner.nextLine();
-        System.out.println("Enter amount:");
-        double amount = scanner.nextDouble();
-        
-        customerService.generateBill(customer, month, amount);
-        System.out.println("Bill generated successfully with unique Bill ID.");
-    }
-
-    public void viewPaymentHistory(Customer customer) {
-        Map<String, Payment> payments = customer.getPaymentMap();
-        if (payments.isEmpty()) {
-            System.out.println("No payments found.");
-        } else {
-            for (Payment payment : payments.values()) {
-                System.out.println("Payment ID: " + payment.getPaymentId());
-                System.out.println("Bill ID: " + payment.getBillId());
-                System.out.println("Amount Paid: " + payment.getAmountPaid());
-                System.out.println("Timestamp: " + payment.getTimestamp());
-                System.out.println("Paid: " + (payment.isPaid() ? "Yes" : "No"));
-                System.out.println("-------------------------------");
-            }
-        }
-    }
-}

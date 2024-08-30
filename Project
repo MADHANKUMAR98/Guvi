@@ -1,65 +1,48 @@
-CREATE TABLE Role_Table (
-    Role_Id INT PRIMARY KEY,
-    Role_Description VARCHAR2(10) NOT NULL
+CREATE TABLE Meter_Table (
+    Meter_Id INT PRIMARY KEY,
+    Meter_Number VARCHAR2(20) NOT NULL,
+    Meter_Status_Id INT,
+    FOREIGN KEY (Meter_Status_Id) REFERENCES Meter_Status_Table(Meter_Status_Id)
 );
-
-CREATE TABLE Login_Table (
-    User_Id VARCHAR2(10) PRIMARY KEY,
-    Password VARCHAR2(10) NOT NULL,
-    Role_Id INT,
-    FOREIGN KEY (Role_Id) REFERENCES Role_Table(Role_Id)
-);
-
-CREATE TABLE Address_Table (
-    Address_Id VARCHAR2(10) PRIMARY KEY,
-    House_Number VARCHAR2(10),
-    Street_Name VARCHAR2(50),
-    Area_Name VARCHAR2(50),
-    City_Name VARCHAR2(50),
-    State_Name VARCHAR2(50),
-    Pin_Code VARCHAR2(10)
-);
-
 CREATE TABLE User_Table (
     User_Id VARCHAR2(10) PRIMARY KEY,
     User_Name VARCHAR2(20) NOT NULL,
     Address_Id VARCHAR2(10),
-    Phone_Number VARCHAR2(15),
+    Phone_Number INT,
     Email_Address VARCHAR2(30),
-    Account_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Address_Id) REFERENCES Address_Table(Address_Id)
+    Account_Created_TimeStamp DATETIME,
+    Meter_Id INT,  -- Adding Meter_Id to the User_Table
+    FOREIGN KEY (Meter_Id) REFERENCES Meter_Table(Meter_Id)  -- Establishing the foreign key relationship
 );
-CREATE TABLE Usage_Table (
-    Usage_Id VARCHAR2(10) PRIMARY KEY,
-    User_Id VARCHAR2(10),
-    Month VARCHAR2(10),
-    Usage_Reading INT,
-    Admin_Id VARCHAR2(10),
-    Usage_Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (User_Id) REFERENCES User_Table(User_Id),
-    FOREIGN KEY (Admin_Id) REFERENCES User_Table(User_Id)
-);
-CREATE TABLE Billing_Table (
-    Bill_Id VARCHAR2(10) PRIMARY KEY,
-    Usage_Id VARCHAR2(10),
-    Amount DECIMAL(10, 2),
-    Bill_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Usage_Id) REFERENCES Usage_Table(Usage_Id)
+-- Create Meter Status Table First
+CREATE TABLE Meter_Status_Table (
+    Meter_Status_Id INT PRIMARY KEY,
+    Meter_Status_Description VARCHAR2(20) NOT NULL
 );
 
-CREATE TABLE Payment_Method_Table (
-    Payment_Method_Id INT PRIMARY KEY,
-    Payment_Method_Description VARCHAR2(20) NOT NULL
+-- Create Meter Table Next
+CREATE TABLE Meter_Table (
+    Meter_Id INT PRIMARY KEY,
+    Meter_Number VARCHAR2(20) NOT NULL,
+    Meter_Status_Id INT,
+    FOREIGN KEY (Meter_Status_Id) REFERENCES Meter_Status_Table(Meter_Status_Id)
 );
 
-CREATE TABLE Payment_Table (
-    Payment_Id VARCHAR2(10) PRIMARY KEY,
-    Bill_Id VARCHAR2(10),
-    Payment_Method_Id INT,
-    Payment_Made_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (Bill_Id) REFERENCES Billing_Table(Bill_Id),
-    FOREIGN KEY (Payment_Method_Id) REFERENCES Payment_Method_Table(Payment_Method_Id)
+-- Finally, Create User Table with Meter_Id Reference
+CREATE TABLE User_Table (
+    User_Id VARCHAR2(10) PRIMARY KEY,
+    User_Name VARCHAR2(20) NOT NULL,
+    Address_Id VARCHAR2(10),
+    Phone_Number INT,
+    Email_Address VARCHAR2(30),
+    Account_Created_TimeStamp DATETIME,
+    Meter_Id INT,  -- Meter_Id column added
+    FOREIGN KEY (Meter_Id) REFERENCES Meter_Table(Meter_Id)  -- Foreign key reference to Meter_Table
 );
-
-
-
+INSERT INTO Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id) 
+VALUES (1, 'MT-1001', 1);
+INSERT INTO User_Table (User_Id, User_Name, Address_Id, Phone_Number, Email_Address, Account_Created_TimeStamp, Meter_Id) 
+VALUES ('U123', 'John Doe', 'A001', 1234567890, 'john.doe@example.com', CURRENT_TIMESTAMP, 1);
+SELECT u.User_Id, u.User_Name, m.Meter_Number 
+FROM User_Table u
+JOIN Meter_Table m ON u.Meter_Id = m.Meter_Id;

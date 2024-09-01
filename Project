@@ -1,12 +1,3 @@
--- Create EBS_Login_Table
-CREATE TABLE EBS_Login_Table (
-    Login_Id VARCHAR(20) PRIMARY KEY,
-    User_Id VARCHAR(20) NOT NULL,
-    Password VARCHAR(50) NOT NULL,
-    User_Role VARCHAR(10) CHECK (User_Role IN ('Admin', 'Customer')),
-    FOREIGN KEY (User_Id) REFERENCES EBS_User_Table(User_Id)
-);
-
 -- Create EBS_User_Table
 CREATE TABLE EBS_User_Table (
     User_Id VARCHAR(20) PRIMARY KEY,
@@ -15,6 +6,15 @@ CREATE TABLE EBS_User_Table (
     Phone_Number VARCHAR(15) NOT NULL,
     Meter_Id INT NOT NULL,
     Email_Address VARCHAR(50) UNIQUE NOT NULL
+);
+
+-- Create EBS_Login_Table
+CREATE TABLE EBS_Login_Table (
+    Login_Id VARCHAR(20) PRIMARY KEY,
+    User_Id VARCHAR(20) NOT NULL,
+    Password VARCHAR(50) NOT NULL,
+    User_Role VARCHAR(10) CHECK (User_Role IN ('Admin', 'Customer')),
+    FOREIGN KEY (User_Id) REFERENCES EBS_User_Table(User_Id)
 );
 
 -- Create EBS_Address_Table
@@ -78,3 +78,58 @@ CREATE TABLE EBS_Payment_Table (
     FOREIGN KEY (Bill_Id) REFERENCES EBS_Billing_Table(Bill_Id),
     FOREIGN KEY (Payment_Method_Id) REFERENCES EBS_Payment_Method_Table(Payment_Method_Id)
 );
+
+-- Sample Data Insertion
+-- Insert into EBS_Address_Table
+INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code)
+VALUES 
+('addr01', '101', 'Main Street', 'Downtown', 'CityA', 'StateA', '123456'),
+('addr02', '202', 'Second Street', 'Uptown', 'CityB', 'StateB', '654321');
+
+-- Insert into EBS_Meter_Status_Table
+INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description)
+VALUES 
+(1, 'Active'),
+(2, 'Inactive');
+
+-- Insert into EBS_Meter_Table
+INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id)
+VALUES 
+(101, 'MT-001', 1),
+(102, 'MT-002', 1);
+
+-- Insert into EBS_User_Table
+INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
+VALUES 
+('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com'),
+('user01', 'John Doe', 'addr02', '9159234569', 102, 'john@example.com');
+
+-- Insert into EBS_Login_Table
+INSERT INTO EBS_Login_Table (Login_Id, User_Id, Password, User_Role)
+VALUES 
+('login01', 'admin01', 'admin123', 'Admin'),
+('login02', 'user01', 'user123', 'Customer');
+
+-- Insert into EBS_Usage_Table
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
+VALUES 
+('usage01', 'user01', 'August', 500, 'admin01'),
+('usage02', 'user01', 'September', 600, 'admin01');
+
+-- Insert into EBS_Billing_Table
+INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount)
+VALUES 
+('bill01', 'usage01', 120.50),
+('bill02', 'usage02', 150.75);
+
+-- Insert into EBS_Payment_Method_Table
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
+VALUES 
+(1, 'Credit Card'),
+(2, 'Debit Card');
+
+-- Insert into EBS_Payment_Table
+INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id)
+VALUES 
+('pay01', 'bill01', 1),
+('pay02', 'bill02', 2);

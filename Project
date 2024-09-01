@@ -1,46 +1,80 @@
--- Insert into EBS_Meter_Status_Table (parent table for Meter Status)
-INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description)
-VALUES (1, 'Active');
+-- Create EBS_Login_Table
+CREATE TABLE EBS_Login_Table (
+    Login_Id VARCHAR(20) PRIMARY KEY,
+    User_Id VARCHAR(20) NOT NULL,
+    Password VARCHAR(50) NOT NULL,
+    User_Role VARCHAR(10) CHECK (User_Role IN ('Admin', 'Customer')),
+    FOREIGN KEY (User_Id) REFERENCES EBS_User_Table(User_Id)
+);
 
--- Insert into EBS_Address_Table (parent table for Address)
-INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code)
-VALUES ('addr01', '123', 'Main Street', 'Downtown', 'Metropolis', 'StateName', '123456');
+-- Create EBS_User_Table
+CREATE TABLE EBS_User_Table (
+    User_Id VARCHAR(20) PRIMARY KEY,
+    User_Name VARCHAR(50) NOT NULL,
+    Address_Id VARCHAR(20) NOT NULL,
+    Phone_Number VARCHAR(15) NOT NULL,
+    Meter_Id INT NOT NULL,
+    Email_Address VARCHAR(50) UNIQUE NOT NULL
+);
 
--- Insert into EBS_Meter_Table (parent table for Meter, references Meter Status)
-INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id)
-VALUES (101, 'MT-001', 1);
+-- Create EBS_Address_Table
+CREATE TABLE EBS_Address_Table (
+    Address_Id VARCHAR(20) PRIMARY KEY,
+    House_Number VARCHAR(20) NOT NULL,
+    Street_Name VARCHAR(50) NOT NULL,
+    Area_Name VARCHAR(50),
+    City_Name VARCHAR(50) NOT NULL,
+    State_Name VARCHAR(50) NOT NULL,
+    Pin_Code VARCHAR(10) NOT NULL
+);
 
--- Insert into EBS_User_Table (references Address and Meter tables)
-INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
-VALUES ('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com');
+-- Create EBS_Meter_Status_Table
+CREATE TABLE EBS_Meter_Status_Table (
+    Meter_Status_Id INT PRIMARY KEY,
+    Meter_Status_Description VARCHAR(50) NOT NULL
+);
 
-INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
-VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
+-- Create EBS_Meter_Table
+CREATE TABLE EBS_Meter_Table (
+    Meter_Id INT PRIMARY KEY,
+    Meter_Number VARCHAR(20) NOT NULL UNIQUE,
+    Meter_Status_Id INT NOT NULL,
+    FOREIGN KEY (Meter_Status_Id) REFERENCES EBS_Meter_Status_Table(Meter_Status_Id)
+);
 
--- Insert into EBS_Usage_Table (references User and Admin from User Table)
-INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id, Usage_Created_At)
-VALUES ('usage01', 'user01', 'August', 500, 'admin01', CURRENT_TIMESTAMP);
+-- Create EBS_Usage_Table
+CREATE TABLE EBS_Usage_Table (
+    Usage_Id VARCHAR(20) PRIMARY KEY,
+    User_Id VARCHAR(20) NOT NULL,
+    Month VARCHAR(20) NOT NULL,
+    Usage_Reading INT NOT NULL,
+    Admin_Id VARCHAR(20) NOT NULL,
+    Usage_Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (User_Id) REFERENCES EBS_User_Table(User_Id),
+    FOREIGN KEY (Admin_Id) REFERENCES EBS_User_Table(User_Id)
+);
 
--- Insert into EBS_Billing_Table (references Usage Table)
-INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount, Bill_Created_Timestamp)
-VALUES ('bill01', 'usage01', 120.50, CURRENT_TIMESTAMP);
+-- Create EBS_Billing_Table
+CREATE TABLE EBS_Billing_Table (
+    Bill_Id VARCHAR(20) PRIMARY KEY,
+    Usage_Id VARCHAR(20) NOT NULL,
+    Amount DECIMAL(10, 2) NOT NULL,
+    Bill_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Usage_Id) REFERENCES EBS_Usage_Table(Usage_Id)
+);
 
--- Insert into EBS_Payment_Method_Table (unique constraint must be respected)
--- First, check if values exist, if not then insert
-MERGE INTO EBS_Payment_Method_Table pm
-USING (SELECT 1 AS Payment_Method_Id, 'Credit Card' AS Payment_Method_Description FROM dual) src
-ON (pm.Payment_Method_Id = src.Payment_Method_Id)
-WHEN NOT MATCHED THEN
-INSERT (Payment_Method_Id, Payment_Method_Description)
-VALUES (1, 'Credit Card');
+-- Create EBS_Payment_Method_Table
+CREATE TABLE EBS_Payment_Method_Table (
+    Payment_Method_Id INT PRIMARY KEY,
+    Payment_Method_Description VARCHAR(50) NOT NULL
+);
 
-MERGE INTO EBS_Payment_Method_Table pm
-USING (SELECT 2 AS Payment_Method_Id, 'Debit Card' AS Payment_Method_Description FROM dual) src
-ON (pm.Payment_Method_Id = src.Payment_Method_Id)
-WHEN NOT MATCHED THEN
-INSERT (Payment_Method_Id, Payment_Method_Description)
-VALUES (2, 'Debit Card');
-
--- Insert into EBS_Payment_Table (references Billing and Payment Method tables)
-INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id, Payment_Made_At)
-VALUES ('pay01', 'bill01', 1, CURRENT_TIMESTAMP);
+-- Create EBS_Payment_Table
+CREATE TABLE EBS_Payment_Table (
+    Payment_Id VARCHAR(20) PRIMARY KEY,
+    Bill_Id VARCHAR(20) NOT NULL,
+    Payment_Method_Id INT NOT NULL,
+    Payment_Made_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Bill_Id) REFERENCES EBS_Billing_Table(Bill_Id),
+    FOREIGN KEY (Payment_Method_Id) REFERENCES EBS_Payment_Method_Table(Payment_Method_Id)
+);

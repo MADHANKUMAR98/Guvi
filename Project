@@ -1,30 +1,36 @@
--- Inserting the Admin into EBS_User_Table if not already present
+INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (1, 'Admin');
+INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (2, 'User');
+
+INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code)
+VALUES ('addr01', '123', 'Main Street', 'Downtown', 'Metropolis', 'StateName', '123456');
+
+INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id)
+VALUES (101, 'MT-001', 1);  -- Make sure the `Meter_Status_Id` exists in `EBS_Meter_Status_Table`
+
+-- Ensure that Address_Id 'addr01' and Meter_Id '101' exist
 INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
 VALUES ('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com');
 
--- Inserting the Customer/User into EBS_User_Table if not already present
 INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
 VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
--- Insert usage data for user 'user01' by admin 'admin01'
-INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
-VALUES ('usage01', 'user01', 'August', 500, 'admin01');
--- Assuming this step was completed in the previous fix:
-INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
-VALUES ('usage01', 'user01', 'August', 500, 'admin01');
 
--- Now inserting into billing table, referencing existing usage record:
-INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount)
-VALUES ('bill01', 'usage01', 120.50);
+-- Ensure 'user01' and 'admin01' exist in `EBS_User_Table`
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id, Usage_Created_At)
+VALUES ('usage01', 'user01', 'August', 500, 'admin01', CURRENT_TIMESTAMP);
 
--- Adding a sample payment method if table is empty
+-- Ensure 'usage01' exists in `EBS_Usage_Table`
+INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount, Bill_Created_Timestamp)
+VALUES ('bill01', 'usage01', 120.50, CURRENT_TIMESTAMP);
+
 INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
 VALUES (1, 'Credit Card');
 
--- You can add more payment methods as needed
 INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
 VALUES (2, 'Debit Card');
 
--- Now inserting into payment table, referencing existing billing record and payment method
+-- Ensure 'bill01' exists in `EBS_Billing_Table` and '1' exists in `EBS_Payment_Method_Table`
 INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id, Payment_Made_At)
 VALUES ('pay01', 'bill01', 1, CURRENT_TIMESTAMP);
+
+
 

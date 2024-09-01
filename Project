@@ -1,38 +1,10 @@
--- Insert data into EBS_Role_Table
-INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (1, 'admin');
-INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (2, 'user');
+-- Inserting the Admin into EBS_User_Table if not already present
+INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
+VALUES ('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com');
 
--- Insert data into EBS_Login_Table
-INSERT INTO EBS_Login_Table (User_Id, Password, Role_Id) VALUES ('user01', 'password123', 2);
-INSERT INTO EBS_Login_Table (User_Id, Password, Role_Id) VALUES ('admin01', 'adminpass', 1);
-
--- Insert data into EBS_Address_Table
-INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code) 
-VALUES ('addr01', '123', 'Main St', 'Downtown', 'Metropolis', 'StateX', '12345');
-
--- Insert data into EBS_Meter_Status_Table
-INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description) VALUES (1, 'Active');
-INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description) VALUES (2, 'Inactive');
-
--- Insert data into EBS_Meter_Table
-INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id) VALUES (101, 'MTR123456', 1);
-
--- Insert data into EBS_User_Table
-INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address) 
+-- Inserting the Customer/User into EBS_User_Table if not already present
+INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
 VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
-
--- Insert data into EBS_Usage_Table
-INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id) 
+-- Insert usage data for user 'user01' by admin 'admin01'
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
 VALUES ('usage01', 'user01', 'August', 500, 'admin01');
-
--- Insert data into EBS_Billing_Table
-INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount) 
-VALUES ('bill01', 'usage01', 120.50);
-
--- Insert data into EBS_Payment_Method_Table
-INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description) VALUES (1, 'Credit Card');
-INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description) VALUES (2, 'Debit Card');
-
--- Insert data into EBS_Payment_Table
-INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id) 
-VALUES ('pay01', 'bill01', 1);

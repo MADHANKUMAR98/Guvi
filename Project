@@ -37,3 +37,134 @@ INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Descript
 -- Insert Payments
 INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id) VALUES ('pay01', 'bill01', 1);
 INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id) VALUES ('pay02', 'bill02', 2);
+-- Create Tables
+CREATE TABLE EBS_Role_Table (
+    Role_Id INT PRIMARY KEY,
+    Role_Description VARCHAR2(10) NOT NULL
+);
+
+CREATE TABLE EBS_Login_Table (
+    User_Id VARCHAR2(10) PRIMARY KEY,
+    Password VARCHAR2(10) NOT NULL,
+    Role_Id INT,
+    FOREIGN KEY (Role_Id) REFERENCES EBS_Role_Table(Role_Id)
+);
+
+CREATE TABLE EBS_Address_Table (
+    Address_Id VARCHAR2(10) PRIMARY KEY,
+    House_Number VARCHAR2(10),
+    Street_Name VARCHAR2(50),
+    Area_Name VARCHAR2(50),
+    City_Name VARCHAR2(50),
+    State_Name VARCHAR2(50),
+    Pin_Code VARCHAR2(10)
+);
+
+CREATE TABLE EBS_Meter_Table (
+    Meter_Id INT PRIMARY KEY,
+    Meter_Number VARCHAR2(20) NOT NULL,
+    Meter_Status_Id INT,
+    FOREIGN KEY (Meter_Status_Id) REFERENCES EBS_Meter_Status_Table(Meter_Status_Id)
+);
+
+CREATE TABLE EBS_Meter_Status_Table (
+    Meter_Status_Id INT PRIMARY KEY,
+    Meter_Status_Description VARCHAR2(10) NOT NULL
+);
+
+CREATE TABLE EBS_User_Table (
+    User_Id VARCHAR2(10) PRIMARY KEY,
+    User_Name VARCHAR2(20) NOT NULL,
+    Address_Id VARCHAR2(10),
+    Phone_Number VARCHAR2(15),
+    Meter_Id INT,
+    Email_Address VARCHAR2(30),
+    Account_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Address_Id) REFERENCES EBS_Address_Table(Address_Id),
+    FOREIGN KEY (Meter_Id) REFERENCES EBS_Meter_Table(Meter_Id)
+);
+
+CREATE TABLE EBS_Usage_Table (
+    Usage_Id VARCHAR2(10) PRIMARY KEY,
+    User_Id VARCHAR2(10),
+    Month VARCHAR2(10),
+    Usage_Reading INT,
+    Admin_Id VARCHAR2(10),
+    Usage_Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (User_Id) REFERENCES EBS_User_Table(User_Id),
+    FOREIGN KEY (Admin_Id) REFERENCES EBS_Login_Table(User_Id)
+);
+
+CREATE TABLE EBS_Billing_Table (
+    Bill_Id VARCHAR2(10) PRIMARY KEY,
+    Usage_Id VARCHAR2(10),
+    Amount DECIMAL(10, 2),
+    Bill_Created_Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Usage_Id) REFERENCES EBS_Usage_Table(Usage_Id)
+);
+
+CREATE TABLE EBS_Payment_Method_Table (
+    Payment_Method_Id INT PRIMARY KEY,
+    Payment_Method_Description VARCHAR2(70) NOT NULL
+);
+
+CREATE TABLE EBS_Payment_Table (
+    Payment_Id VARCHAR2(10) PRIMARY KEY,
+    Bill_Id VARCHAR2(10),
+    Payment_Method_Id INT,
+    Payment_Made_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Bill_Id) REFERENCES EBS_Billing_Table(Bill_Id),
+    FOREIGN KEY (Payment_Method_Id) REFERENCES EBS_Payment_Method_Table(Payment_Method_Id)
+);
+
+-- Insert Sample Data
+
+-- Insert Roles
+INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES
+(1, 'Admin'),
+(2, 'User');
+
+-- Insert Login Entries
+INSERT INTO EBS_Login_Table (User_Id, Password, Role_Id) VALUES
+('admin01', 'adminpass', 1),
+('user01', 'userpass', 2);
+
+-- Insert Addresses
+INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code) VALUES
+('addr01', '123', 'Main St', 'Downtown', 'Cityville', 'State', '12345'),
+('addr02', '456', 'Second St', 'Uptown', 'Townsville', 'State', '67890');
+
+-- Insert Meter Status
+INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description) VALUES
+(1, 'Active'),
+(2, 'Inactive');
+
+-- Insert Meters
+INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id) VALUES
+(101, 'MT-001', 1),
+(102, 'MT-002', 1);
+
+-- Insert Users
+INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address) VALUES
+('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com'),
+('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@example.com');
+
+-- Insert Usages
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id) VALUES
+('usage01', 'user01', 'August', 500, 'admin01'),
+('usage02', 'user01', 'September', 600, 'admin01');
+
+-- Insert Billings
+INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount) VALUES
+('bill01', 'usage01', 120.50),
+('bill02', 'usage02', 150.75);
+
+-- Insert Payment Methods
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description) VALUES
+(1, 'Credit Card'),
+(2, 'Debit Card');
+
+-- Insert Payments
+INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id) VALUES
+('pay01', 'bill01', 1),
+('pay02', 'bill02', 2);

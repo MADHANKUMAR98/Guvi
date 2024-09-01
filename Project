@@ -8,3 +8,23 @@ VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
 -- Insert usage data for user 'user01' by admin 'admin01'
 INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
 VALUES ('usage01', 'user01', 'August', 500, 'admin01');
+-- Assuming this step was completed in the previous fix:
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id)
+VALUES ('usage01', 'user01', 'August', 500, 'admin01');
+
+-- Now inserting into billing table, referencing existing usage record:
+INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount)
+VALUES ('bill01', 'usage01', 120.50);
+
+-- Adding a sample payment method if table is empty
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
+VALUES (1, 'Credit Card');
+
+-- You can add more payment methods as needed
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
+VALUES (2, 'Debit Card');
+
+-- Now inserting into payment table, referencing existing billing record and payment method
+INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id, Payment_Made_At)
+VALUES ('pay01', 'bill01', 1, CURRENT_TIMESTAMP);
+

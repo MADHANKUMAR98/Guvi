@@ -1,48 +1,38 @@
-CREATE TABLE Meter_Table (
-    Meter_Id INT PRIMARY KEY,
-    Meter_Number VARCHAR2(20) NOT NULL,
-    Meter_Status_Id INT,
-    FOREIGN KEY (Meter_Status_Id) REFERENCES Meter_Status_Table(Meter_Status_Id)
-);
-CREATE TABLE User_Table (
-    User_Id VARCHAR2(10) PRIMARY KEY,
-    User_Name VARCHAR2(20) NOT NULL,
-    Address_Id VARCHAR2(10),
-    Phone_Number INT,
-    Email_Address VARCHAR2(30),
-    Account_Created_TimeStamp DATETIME,
-    Meter_Id INT,  -- Adding Meter_Id to the User_Table
-    FOREIGN KEY (Meter_Id) REFERENCES Meter_Table(Meter_Id)  -- Establishing the foreign key relationship
-);
--- Create Meter Status Table First
-CREATE TABLE Meter_Status_Table (
-    Meter_Status_Id INT PRIMARY KEY,
-    Meter_Status_Description VARCHAR2(20) NOT NULL
-);
+-- Insert data into EBS_Role_Table
+INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (1, 'admin');
+INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (2, 'user');
 
--- Create Meter Table Next
-CREATE TABLE Meter_Table (
-    Meter_Id INT PRIMARY KEY,
-    Meter_Number VARCHAR2(20) NOT NULL,
-    Meter_Status_Id INT,
-    FOREIGN KEY (Meter_Status_Id) REFERENCES Meter_Status_Table(Meter_Status_Id)
-);
+-- Insert data into EBS_Login_Table
+INSERT INTO EBS_Login_Table (User_Id, Password, Role_Id) VALUES ('user01', 'password123', 2);
+INSERT INTO EBS_Login_Table (User_Id, Password, Role_Id) VALUES ('admin01', 'adminpass', 1);
 
--- Finally, Create User Table with Meter_Id Reference
-CREATE TABLE User_Table (
-    User_Id VARCHAR2(10) PRIMARY KEY,
-    User_Name VARCHAR2(20) NOT NULL,
-    Address_Id VARCHAR2(10),
-    Phone_Number INT,
-    Email_Address VARCHAR2(30),
-    Account_Created_TimeStamp DATETIME,
-    Meter_Id INT,  -- Meter_Id column added
-    FOREIGN KEY (Meter_Id) REFERENCES Meter_Table(Meter_Id)  -- Foreign key reference to Meter_Table
-);
-INSERT INTO Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id) 
-VALUES (1, 'MT-1001', 1);
-INSERT INTO User_Table (User_Id, User_Name, Address_Id, Phone_Number, Email_Address, Account_Created_TimeStamp, Meter_Id) 
-VALUES ('U123', 'John Doe', 'A001', 1234567890, 'john.doe@example.com', CURRENT_TIMESTAMP, 1);
-SELECT u.User_Id, u.User_Name, m.Meter_Number 
-FROM User_Table u
-JOIN Meter_Table m ON u.Meter_Id = m.Meter_Id;
+-- Insert data into EBS_Address_Table
+INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code) 
+VALUES ('addr01', '123', 'Main St', 'Downtown', 'Metropolis', 'StateX', '12345');
+
+-- Insert data into EBS_Meter_Status_Table
+INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description) VALUES (1, 'Active');
+INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description) VALUES (2, 'Inactive');
+
+-- Insert data into EBS_Meter_Table
+INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id) VALUES (101, 'MTR123456', 1);
+
+-- Insert data into EBS_User_Table
+INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address) 
+VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
+
+-- Insert data into EBS_Usage_Table
+INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id) 
+VALUES ('usage01', 'user01', 'August', 500, 'admin01');
+
+-- Insert data into EBS_Billing_Table
+INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount) 
+VALUES ('bill01', 'usage01', 120.50);
+
+-- Insert data into EBS_Payment_Method_Table
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description) VALUES (1, 'Credit Card');
+INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description) VALUES (2, 'Debit Card');
+
+-- Insert data into EBS_Payment_Table
+INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id) 
+VALUES ('pay01', 'bill01', 1);

@@ -1,36 +1,46 @@
-INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (1, 'Admin');
-INSERT INTO EBS_Role_Table (Role_Id, Role_Description) VALUES (2, 'User');
+-- Insert into EBS_Meter_Status_Table (parent table for Meter Status)
+INSERT INTO EBS_Meter_Status_Table (Meter_Status_Id, Meter_Status_Description)
+VALUES (1, 'Active');
 
+-- Insert into EBS_Address_Table (parent table for Address)
 INSERT INTO EBS_Address_Table (Address_Id, House_Number, Street_Name, Area_Name, City_Name, State_Name, Pin_Code)
 VALUES ('addr01', '123', 'Main Street', 'Downtown', 'Metropolis', 'StateName', '123456');
 
+-- Insert into EBS_Meter_Table (parent table for Meter, references Meter Status)
 INSERT INTO EBS_Meter_Table (Meter_Id, Meter_Number, Meter_Status_Id)
-VALUES (101, 'MT-001', 1);  -- Make sure the `Meter_Status_Id` exists in `EBS_Meter_Status_Table`
+VALUES (101, 'MT-001', 1);
 
--- Ensure that Address_Id 'addr01' and Meter_Id '101' exist
+-- Insert into EBS_User_Table (references Address and Meter tables)
 INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
 VALUES ('admin01', 'Admin User', 'addr01', '9999999999', 101, 'admin@example.com');
 
 INSERT INTO EBS_User_Table (User_Id, User_Name, Address_Id, Phone_Number, Meter_Id, Email_Address)
 VALUES ('user01', 'John Doe', 'addr01', '9159234569', 101, 'john@gmail.com');
 
--- Ensure 'user01' and 'admin01' exist in `EBS_User_Table`
+-- Insert into EBS_Usage_Table (references User and Admin from User Table)
 INSERT INTO EBS_Usage_Table (Usage_Id, User_Id, Month, Usage_Reading, Admin_Id, Usage_Created_At)
 VALUES ('usage01', 'user01', 'August', 500, 'admin01', CURRENT_TIMESTAMP);
 
--- Ensure 'usage01' exists in `EBS_Usage_Table`
+-- Insert into EBS_Billing_Table (references Usage Table)
 INSERT INTO EBS_Billing_Table (Bill_Id, Usage_Id, Amount, Bill_Created_Timestamp)
 VALUES ('bill01', 'usage01', 120.50, CURRENT_TIMESTAMP);
 
-INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
+-- Insert into EBS_Payment_Method_Table (unique constraint must be respected)
+-- First, check if values exist, if not then insert
+MERGE INTO EBS_Payment_Method_Table pm
+USING (SELECT 1 AS Payment_Method_Id, 'Credit Card' AS Payment_Method_Description FROM dual) src
+ON (pm.Payment_Method_Id = src.Payment_Method_Id)
+WHEN NOT MATCHED THEN
+INSERT (Payment_Method_Id, Payment_Method_Description)
 VALUES (1, 'Credit Card');
 
-INSERT INTO EBS_Payment_Method_Table (Payment_Method_Id, Payment_Method_Description)
+MERGE INTO EBS_Payment_Method_Table pm
+USING (SELECT 2 AS Payment_Method_Id, 'Debit Card' AS Payment_Method_Description FROM dual) src
+ON (pm.Payment_Method_Id = src.Payment_Method_Id)
+WHEN NOT MATCHED THEN
+INSERT (Payment_Method_Id, Payment_Method_Description)
 VALUES (2, 'Debit Card');
 
--- Ensure 'bill01' exists in `EBS_Billing_Table` and '1' exists in `EBS_Payment_Method_Table`
+-- Insert into EBS_Payment_Table (references Billing and Payment Method tables)
 INSERT INTO EBS_Payment_Table (Payment_Id, Bill_Id, Payment_Method_Id, Payment_Made_At)
 VALUES ('pay01', 'bill01', 1, CURRENT_TIMESTAMP);
-
-
-

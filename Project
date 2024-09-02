@@ -532,7 +532,174 @@ public class PlacementDriveServiceImpl implements PlacementDriveService {
 
 
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Scanner;
 
+public class Main {
+    public static void main(String[] args) {
+        String jdbcUrl = "jdbc:mysql://localhost:3306/placementdb";
+        String jdbcUsername = "root";
+        String jdbcPassword = "password";
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, jdbcUsername, jdbcPassword);
+             Scanner scanner = new Scanner(System.in)) {
+
+            // DAO initialization
+            StudentDAO studentDAO = new StudentDAOImpl(connection);
+            CompanyDAO companyDAO = new CompanyDAOImpl(connection);
+            ApplicationDAO applicationDAO = new ApplicationDAOImpl(connection);
+            InterviewDAO interviewDAO = new InterviewDAOImpl(connection);
+            PlacementDAO placementDAO = new PlacementDAOImpl(connection);
+            PlacementDriveDAO placementDriveDAO = new PlacementDriveDAOImpl(connection);
+
+            // Service initialization
+            StudentService studentService = new StudentServiceImpl(studentDAO);
+            CompanyService companyService = new CompanyServiceImpl(companyDAO);
+            ApplicationService applicationService = new ApplicationServiceImpl(applicationDAO);
+            InterviewService interviewService = new InterviewServiceImpl(interviewDAO);
+            PlacementService placementService = new PlacementServiceImpl(placementDAO);
+            PlacementDriveService placementDriveService = new PlacementDriveServiceImpl(placementDriveDAO);
+
+            // Sample interaction with the system
+            System.out.println("Welcome to the Placement Management System");
+            System.out.println("1. Add Student");
+            System.out.println("2. List All Students");
+            System.out.println("3. Add Company");
+            System.out.println("4. List All Companies");
+            System.out.println("5. Add Application");
+            System.out.println("6. Schedule Interview");
+            System.out.println("7. Add Placement");
+            System.out.println("8. Add Placement Drive");
+            System.out.println("0. Exit");
+
+            int choice;
+            do {
+                System.out.print("Enter your choice: ");
+                choice = scanner.nextInt();
+                scanner.nextLine();  // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        System.out.print("Enter Student Name: ");
+                        String studentName = scanner.nextLine();
+                        System.out.print("Enter Student Email: ");
+                        String studentEmail = scanner.nextLine();
+                        Student student = new Student();
+                        student.setName(studentName);
+                        student.setEmail(studentEmail);
+                        studentService.addStudent(student);
+                        System.out.println("Student added successfully.");
+                        break;
+
+                    case 2:
+                        System.out.println("Listing all students:");
+                        for (Student s : studentService.getAllStudents()) {
+                            System.out.println(s.getId() + ": " + s.getName() + " (" + s.getEmail() + ")");
+                        }
+                        break;
+
+                    case 3:
+                        System.out.print("Enter Company Name: ");
+                        String companyName = scanner.nextLine();
+                        System.out.print("Enter Company Location: ");
+                        String companyLocation = scanner.nextLine();
+                        Company company = new Company();
+                        company.setName(companyName);
+                        company.setLocation(companyLocation);
+                        companyService.addCompany(company);
+                        System.out.println("Company added successfully.");
+                        break;
+
+                    case 4:
+                        System.out.println("Listing all companies:");
+                        for (Company c : companyService.getAllCompanies()) {
+                            System.out.println(c.getId() + ": " + c.getName() + " (" + c.getLocation() + ")");
+                        }
+                        break;
+
+                    case 5:
+                        System.out.print("Enter Student ID for Application: ");
+                        int studentIdForApplication = scanner.nextInt();
+                        System.out.print("Enter Company ID for Application: ");
+                        int companyIdForApplication = scanner.nextInt();
+                        Application application = new Application();
+                        application.setStudentId(studentIdForApplication);
+                        application.setCompanyId(companyIdForApplication);
+                        applicationService.addApplication(application);
+                        System.out.println("Application submitted successfully.");
+                        break;
+
+                    case 6:
+                        System.out.print("Enter Application ID for Scheduling Interview: ");
+                        int applicationId = scanner.nextInt();
+                        scanner.nextLine();  // Consume newline
+                        System.out.print("Enter Interview Date (YYYY-MM-DD): ");
+                        String interviewDate = scanner.nextLine();
+                        System.out.print("Enter Interview Time (HH:MM): ");
+                        String interviewTime = scanner.nextLine();
+                        Interview interview = new Interview();
+                        interview.setApplicationId(applicationId);
+                        interview.setInterviewDate(LocalDate.parse(interviewDate));
+                        interview.setInterviewTime(interviewTime);
+                        interview.setStatus("Scheduled");
+                        interviewService.scheduleInterview(interview);
+                        System.out.println("Interview scheduled successfully.");
+                        break;
+
+                    case 7:
+                        System.out.print("Enter Student ID for Placement: ");
+                        int studentIdForPlacement = scanner.nextInt();
+                        System.out.print("Enter Company ID for Placement: ");
+                        int companyIdForPlacement = scanner.nextInt();
+                        System.out.print("Enter Placement Date (YYYY-MM-DD): ");
+                        String placementDate = scanner.next();
+                        System.out.print("Enter Salary: ");
+                        double salary = scanner.nextDouble();
+                        Placement placement = new Placement();
+                        placement.setStudentId(studentIdForPlacement);
+                        placement.setCompanyId(companyIdForPlacement);
+                        placement.setPlacementDate(LocalDate.parse(placementDate));
+                        placement.setSalary(salary);
+                        placementService.addPlacement(placement);
+                        System.out.println("Placement added successfully.");
+                        break;
+
+                    case 8:
+                        System.out.print("Enter Company ID for Placement Drive: ");
+                        int companyIdForDrive = scanner.nextInt();
+                        scanner.nextLine();  // Consume newline
+                        System.out.print("Enter Drive Date (YYYY-MM-DD): ");
+                        String driveDate = scanner.nextLine();
+                        System.out.print("Enter Location: ");
+                        String driveLocation = scanner.nextLine();
+                        System.out.print("Enter Description: ");
+                        String driveDescription = scanner.nextLine();
+                        PlacementDrive drive = new PlacementDrive();
+                        drive.setCompanyId(companyIdForDrive);
+                        drive.setDriveDate(LocalDate.parse(driveDate));
+                        drive.setLocation(driveLocation);
+                        drive.setDescription(driveDescription);
+                        placementDriveService.addPlacementDrive(drive);
+                        System.out.println("Placement drive added successfully.");
+                        break;
+
+                    case 0:
+                        System.out.println("Exiting the system.");
+                        break;
+
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                        break;
+                }
+            } while (choice != 0);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}           
 
 
 

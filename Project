@@ -50,3 +50,1012 @@ CREATE TABLE PlacementDrives (
     description TEXT,
     FOREIGN KEY (company_id) REFERENCES Companies(company_id)
 );
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentDAO {
+    private Connection connection;
+
+    public StudentDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void addStudent(Student student) throws SQLException {
+        String query = "INSERT INTO Students (name, email, phone, department, cgpa) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, student.getName());
+            stmt.setString(2, student.getEmail());
+            stmt.setString(3, student.getPhone());
+            stmt.setString(4, student.getDepartment());
+            stmt.setFloat(5, student.getCgpa());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<Student> getAllStudents() throws SQLException {
+        List<Student> students = new ArrayList<>();
+        String query = "SELECT * FROM Students";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                Student student = new Student();
+                student.setStudentId(rs.getInt("student_id"));
+                student.setName(rs.getString("name"));
+                student.setEmail(rs.getString("email"));
+                student.setPhone(rs.getString("phone"));
+                student.setDepartment(rs.getString("department"));
+                student.setCgpa(rs.getFloat("cgpa"));
+                students.add(student);
+            }
+        }
+        return students;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CompanyDAO {
+    private Connection connection;
+
+    public CompanyDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void addCompany(Company company) throws SQLException {
+        String query = "INSERT INTO Companies (name, contact_email, contact_phone, industry) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, company.getName());
+            stmt.setString(2, company.getContactEmail());
+            stmt.setString(3, company.getContactPhone());
+            stmt.setString(4, company.getIndustry());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<Company> getAllCompanies() throws SQLException {
+        List<Company> companies = new ArrayList<>();
+        String query = "SELECT * FROM Companies";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                Company company = new Company();
+                company.setCompanyId(rs.getInt("company_id"));
+                company.setName(rs.getString("name"));
+                company.setContactEmail(rs.getString("contact_email"));
+                company.setContactPhone(rs.getString("contact_phone"));
+                company.setIndustry(rs.getString("industry"));
+                companies.add(company);
+            }
+        }
+        return companies;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class PlacementService {
+    private StudentDAO studentDAO;
+    private CompanyDAO companyDAO;
+
+    public PlacementService(Connection connection) {
+        this.studentDAO = new StudentDAO(connection);
+        this.companyDAO = new CompanyDAO(connection);
+    }
+
+    public void addNewStudent(Student student) throws SQLException {
+        studentDAO.addStudent(student);
+    }
+
+    public void addNewCompany(Company company) throws SQLException {
+        companyDAO.addCompany(company);
+    }
+
+    public List<Student> listAllStudents() throws SQLException {
+        return studentDAO.getAllStudents();
+    }
+
+    public List<Company> listAllCompanies() throws SQLException {
+        return companyDAO.getAllCompanies();
+    }
+
+    // More methods to manage applications, interviews, and placements can be added here
+}
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Scanner;
+
+public class MainApp {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        // JDBC connection details
+        String url = "jdbc:mysql://localhost:3306/college_placement_db";
+        String user = "root";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            PlacementService placementService = new PlacementService(connection);
+
+            System.out.println("Welcome to the College Placement System");
+            System.out.println("1. Add Student");
+            System.out.println("2. Add Company");
+            System.out.println("3. List Students");
+            System.out.println("4. List Companies");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter Student Name: ");
+                    String studentName = scanner.next();
+                    System.out.print("Enter Email: ");
+                    String studentEmail = scanner.next();
+                    System.out.print("Enter Phone: ");
+                    String studentPhone = scanner.next();
+                    System.out.print("Enter Department: ");
+                    String studentDepartment = scanner.next();
+                    System.out.print("Enter CGPA: ");
+                    float studentCgpa = scanner.nextFloat();
+                    Student student = new Student(studentName, studentEmail, studentPhone, studentDepartment, studentCgpa);
+                    placementService.addNewStudent(student);
+                    System.out.println("Student added successfully!");
+                    break;
+                case 2:
+                    System.out.print("Enter Company Name: ");
+                    String companyName = scanner.next();
+                    System.out.print("Enter Contact Email: ");
+                    String companyEmail = scanner.next();
+                    System.out.print("Enter Contact Phone: ");
+                    String companyPhone = scanner.next();
+                    System.out.print("Enter Industry: ");
+                    String companyIndustry = scanner.next();
+                    Company company = new Company(companyName, companyEmail, companyPhone, companyIndustry);
+                    placementService.addNewCompany(company);
+                    System.out.println("Company added successfully!");
+                    break;
+                case 3:
+                    List<Student> students = placementService.listAllStudents();
+                    students.forEach(s -> System.out.println(s.getName()));
+                    break;
+                case 4:
+                    List<Company> companies = placementService.listAllCompanies();
+                    companies.forEach(c -> System.out.println(c.getName()));
+                    break;
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class Student {
+    private int studentId;
+    private String name;
+    private String email;
+    private String phone;
+    private String department;
+    private float cgpa;
+
+    // Constructors, getters, and setters
+
+    public Student() {
+    }
+
+    public Student(String name, String email, String phone, String department, float cgpa) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.department = department;
+        this.cgpa = cgpa;
+    }
+
+    // Getters and setters
+}
+
+public class Company {
+    private int companyId;
+    private String name;
+    private String contactEmail;
+    private String contactPhone;
+    private String industry;
+
+    // Constructors,
+    public Company() {
+    }
+
+    public Company(String name, String contactEmail, String contactPhone, String industry) {
+        this.name = name;
+        this.contactEmail = contactEmail;
+        this.contactPhone = contactPhone;
+        this.industry = industry;
+    }
+
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public String getIndustry() {
+        return industry;
+    }
+
+    public void setIndustry(String industry) {
+        this.industry = industry;
+    }
+}
+
+public class Application {
+    private int applicationId;
+    private int studentId;
+    private int companyId;
+    private String status; // e.g., Applied, Interviewed, Offered, Rejected
+
+    public Application() {
+    }
+
+    public Application(int studentId, int companyId, String status) {
+        this.studentId = studentId;
+        this.companyId = companyId;
+        this.status = status;
+    }
+
+    public int getApplicationId() {
+        return applicationId;
+    }
+
+    public void setApplicationId(int applicationId) {
+        this.applicationId = applicationId;
+    }
+
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(int studentId) {
+        this.studentId = studentId;
+    }
+
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+}
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+public class Interview {
+    private int interviewId;
+    private int applicationId;
+    private LocalDate interviewDate;
+    private LocalTime interviewTime;
+    private String location;
+
+    public Interview() {
+    }
+
+    public Interview(int applicationId, LocalDate interviewDate, LocalTime interviewTime, String location) {
+        this.applicationId = applicationId;
+        this.interviewDate = interviewDate;
+        this.interviewTime = interviewTime;
+        this.location = location;
+    }
+
+    public int getInterviewId() {
+        return interviewId;
+    }
+
+    public void setInterviewId(int interviewId) {
+        this.interviewId = interviewId;
+    }
+
+    public int getApplicationId() {
+        return applicationId;
+    }
+
+    public void setApplicationId(int applicationId) {
+        this.applicationId = applicationId;
+    }
+
+    public LocalDate getInterviewDate() {
+        return interviewDate;
+    }
+
+    public void setInterviewDate(LocalDate interviewDate) {
+        this.interviewDate = interviewDate;
+    }
+
+    public LocalTime getInterviewTime() {
+        return interviewTime;
+    }
+
+    public void setInterviewTime(LocalTime interviewTime) {
+        this.interviewTime = interviewTime;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+}
+
+import java.time.LocalDate;
+
+public class Placement {
+    private int placementId;
+    private int studentId;
+    private int companyId;
+    private LocalDate placementDate;
+    private double salary;
+
+    public Placement() {
+    }
+
+    public Placement(int studentId, int companyId, LocalDate placementDate, double salary) {
+        this.studentId = studentId;
+        this.companyId = companyId;
+        this.placementDate = placementDate;
+        this.salary = salary;
+    }
+
+    public int getPlacementId() {
+        return placementId;
+    }
+
+    public void setPlacementId(int placementId) {
+        this.placementId = placementId;
+    }
+
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(int studentId) {
+        this.studentId = studentId;
+    }
+
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
+    public LocalDate getPlacementDate() {
+        return placementDate;
+    }
+
+    public void setPlacementDate(LocalDate placementDate) {
+        this.placementDate = placementDate;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
+    }
+}
+
+import java.time.LocalDate;
+
+public class PlacementDrive {
+    private int driveId;
+    private int companyId;
+    private LocalDate driveDate;
+    private String location;
+    private String description;
+
+    public PlacementDrive() {
+    }
+
+    public PlacementDrive(int companyId, LocalDate driveDate, String location, String description) {
+        this.companyId = companyId;
+        this.driveDate = driveDate;
+        this.location = location;
+        this.description = description;
+    }
+
+    public int getDriveId() {
+        return driveId;
+    }
+
+    public void setDriveId(int driveId) {
+        this.driveId = driveId;
+    }
+
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
+    public LocalDate getDriveDate() {
+        return driveDate;
+    }
+
+    public void setDriveDate(LocalDate driveDate) {
+        this.driveDate = driveDate;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+}
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ApplicationDAO {
+    private Connection connection;
+
+    public ApplicationDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void addApplication(Application application) throws SQLException {
+        String query = "INSERT INTO Applications (student_id, company_id, status) VALUES (?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, application.getStudentId());
+            stmt.setInt(2, application.getCompanyId());
+            stmt.setString(3, application.getStatus());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<Application> getApplicationsByStudent(int studentId) throws SQLException {
+        List<Application> applications = new ArrayList<>();
+        String query = "SELECT * FROM Applications WHERE student_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, studentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Application application = new Application();
+                    application.setApplicationId(rs.getInt("application_id"));
+                    application.setStudentId(rs.getInt("student_id"));
+                    application.setCompanyId(rs.getInt("company_id"));
+                    application.setStatus(rs.getString("status"));
+                    applications.add(application);
+                }
+            }
+        }
+        return applications;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class InterviewDAO {
+    private Connection connection;
+
+    public InterviewDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void scheduleInterview(Interview interview) throws SQLException {
+        String query = "INSERT INTO Interviews (application_id, interview_date, interview_time, location) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, interview.getApplicationId());
+            stmt.setDate(2, Date.valueOf(interview.getInterviewDate()));
+            stmt.setTime(3, Time.valueOf(interview.getInterviewTime()));
+            stmt.setString(4, interview.getLocation());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<Interview> getInterviewsByApplication(int applicationId) throws SQLException {
+        List<Interview> interviews = new ArrayList<>();
+        String query = "SELECT * FROM Interviews WHERE application_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, applicationId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Interview interview = new Interview();
+                    interview.setInterviewId(rs.getInt("interview_id"));
+                    interview.setApplicationId(rs.getInt("application_id"));
+                    interview.setInterviewDate(rs.getDate("interview_date").toLocalDate());
+                    interview.setInterviewTime(rs.getTime("interview_time").toLocalTime());
+                    interview.setLocation(rs.getString("location"));
+                    interviews.add(interview);
+                                   interviews.add(interview);
+                }
+            }
+        }
+        return interviews;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlacementDAO {
+    private Connection connection;
+
+    public PlacementDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void addPlacement(Placement placement) throws SQLException {
+        String query = "INSERT INTO Placements (student_id, company_id, placement_date, salary) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, placement.getStudentId());
+            stmt.setInt(2, placement.getCompanyId());
+            stmt.setDate(3, Date.valueOf(placement.getPlacementDate()));
+            stmt.setDouble(4, placement.getSalary());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<Placement> getPlacementsByStudent(int studentId) throws SQLException {
+        List<Placement> placements = new ArrayList<>();
+        String query = "SELECT * FROM Placements WHERE student_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, studentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Placement placement = new Placement();
+                    placement.setPlacementId(rs.getInt("placement_id"));
+                    placement.setStudentId(rs.getInt("student_id"));
+                    placement.setCompanyId(rs.getInt("company_id"));
+                    placement.setPlacementDate(rs.getDate("placement_date").toLocalDate());
+                    placement.setSalary(rs.getDouble("salary"));
+                    placements.add(placement);
+                }
+            }
+        }
+        return placements;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlacementDriveDAO {
+    private Connection connection;
+
+    public PlacementDriveDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public void addPlacementDrive(PlacementDrive drive) throws SQLException {
+        String query = "INSERT INTO PlacementDrives (company_id, drive_date, location, description) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, drive.getCompanyId());
+            stmt.setDate(2, Date.valueOf(drive.getDriveDate()));
+            stmt.setString(3, drive.getLocation());
+            stmt.setString(4, drive.getDescription());
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<PlacementDrive> getPlacementDrivesByCompany(int companyId) throws SQLException {
+        List<PlacementDrive> drives = new ArrayList<>();
+        String query = "SELECT * FROM PlacementDrives WHERE company_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, companyId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    PlacementDrive drive = new PlacementDrive();
+                    drive.setDriveId(rs.getInt("drive_id"));
+                    drive.setCompanyId(rs.getInt("company_id"));
+                    drive.setDriveDate(rs.getDate("drive_date").toLocalDate());
+                    drive.setLocation(rs.getString("location"));
+                    drive.setDescription(rs.getString("description"));
+                    drives.add(drive);
+                }
+            }
+        }
+        return drives;
+    }
+    
+    // Additional CRUD methods can be added as required
+}
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class StudentService {
+    private StudentDAO studentDAO;
+
+    public StudentService(Connection connection) {
+        this.studentDAO = new StudentDAO(connection);
+    }
+
+    public void addStudent(Student student) throws SQLException {
+        studentDAO.addStudent(student);
+    }
+
+    public List<Student> getAllStudents() throws SQLException {
+        return studentDAO.getAllStudents();
+    }
+
+    public Student getStudentById(int id) throws SQLException {
+        return studentDAO.getStudentById(id);
+    }
+
+    // Additional business logic methods can be added here
+}
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class CompanyService {
+    private CompanyDAO companyDAO;
+
+    public CompanyService(Connection connection) {
+        this.companyDAO = new CompanyDAO(connection);
+    }
+
+    public void addCompany(Company company) throws SQLException {
+        companyDAO.addCompany(company);
+    }
+
+    public List<Company> getAllCompanies() throws SQLException {
+        return companyDAO.getAllCompanies();
+    }
+
+    public Company getCompanyById(int id) throws SQLException {
+        return companyDAO.getCompanyById(id);
+    }
+
+    // Additional business logic methods can be added here
+}
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class ApplicationService {
+    private ApplicationDAO applicationDAO;
+
+    public ApplicationService(Connection connection) {
+        this.applicationDAO = new ApplicationDAO(connection);
+    }
+
+    public void addApplication(Application application) throws SQLException {
+        applicationDAO.addApplication(application);
+    }
+
+    public List<Application> getApplicationsByStudent(int studentId) throws SQLException {
+        return applicationDAO.getApplicationsByStudent(studentId);
+    }
+
+    // Additional business logic methods can be added here
+}
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class InterviewService {
+    private InterviewDAO interviewDAO;
+
+    public InterviewService(Connection connection) {
+        this.interviewDAO = new InterviewDAO(connection);
+    }
+
+    public void scheduleInterview(Interview interview) throws SQLException {
+        interviewDAO.scheduleInterview(interview);
+    }
+
+    public List<Interview> getInterviewsByApplication(int applicationId) throws SQLException {
+        return interviewDAO.getInterviewsByApplication(applicationId);
+    }
+
+    // Additional business logic methods can be added here
+}
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class PlacementService {
+    private PlacementDAO placementDAO;
+
+    public PlacementService(Connection connection) {
+        this.placementDAO = new PlacementDAO(connection);
+    }
+
+    public void addPlacement(Placement placement) throws SQLException {
+        placementDAO.addPlacement(placement);
+    }
+
+    public List<Placement> getPlacementsByStudent(int studentId) throws SQLException {
+        return placementDAO.getPlacementsByStudent(studentId);
+    }
+
+    // Additional business logic methods can be added here
+}
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+public class PlacementDriveService {
+    private PlacementDriveDAO placementDriveDAO;
+
+    public PlacementDriveService(Connection connection) {
+        this.placementDriveDAO = new PlacementDriveDAO(connection);
+    }
+
+    public void addPlacementDrive(PlacementDrive drive) throws SQLException {
+        placementDriveDAO.addPlacementDrive(drive);
+    }
+
+    public List<PlacementDrive> getPlacementDrivesByCompany(int companyId) throws SQLException {
+        return placementDriveDAO.getPlacementDrivesByCompany(companyId);
+    }
+
+    // Additional business logic methods can be added here
+}
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/placementdb";
+    private static final String USER = "root";
+    private static final String PASS = "password";
+
+    public static void main(String[] args) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            StudentService studentService = new StudentService(connection);
+            CompanyService companyService = new CompanyService(connection);
+            ApplicationService applicationService = new ApplicationService(connection);
+            InterviewService interviewService = new InterviewService(connection);
+            PlacementService placementService = new PlacementService(connection);
+            PlacementDriveService placementDriveService = new PlacementDriveService(connection);
+
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                System.out.println("College Placement System");
+                System.out.println("1. Add Student");
+                System.out.println("2. List Students");
+                System.out.println("3. Add Company");
+                System.out.println("4. List Companies");
+                System.out.println("5. Apply for Company");
+                System.out.println("6. Schedule Interview");
+                System.out.println("7. Add Placement");
+                System.out.println("8. Add Placement Drive");
+                System.out.println("9. Exit");
+                int choice = scanner.nextInt();
+                scanner.nextLine();  // Consume newline
+
+                switch (choice) {
+                    case 1:
+                        System.out.println("Enter student name:");
+                        String studentName = scanner.nextLine();
+                        System.out.println("Enter email:");
+                        String studentEmail = scanner.nextLine();
+                                                System.out.println("Enter email:");
+                        String studentEmail = scanner.nextLine();
+                        System.out.println("Enter phone number:");
+                        String studentPhone = scanner.nextLine();
+                        System.out.println("Enter course:");
+                        String studentCourse = scanner.nextLine();
+                        System.out.println("Enter year:");
+                        int studentYear = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+
+                        Student student = new Student();
+                        student.setName(studentName);
+                        student.setEmail(studentEmail);
+                        student.setPhone(studentPhone);
+                        student.setCourse(studentCourse);
+                        student.setYear(studentYear);
+
+                        studentService.addStudent(student);
+                        System.out.println("Student added successfully.");
+                        break;
+
+                    case 2:
+                        List<Student> students = studentService.getAllStudents();
+                        for (Student s : students) {
+                            System.out.println(s);
+                        }
+                        break;
+
+                    case 3:
+                        System.out.println("Enter company name:");
+                        String companyName = scanner.nextLine();
+                        System.out.println("Enter company location:");
+                        String companyLocation = scanner.nextLine();
+                        System.out.println("Enter company industry:");
+                        String companyIndustry = scanner.nextLine();
+
+                        Company company = new Company();
+                        company.setName(companyName);
+                        company.setLocation(companyLocation);
+                        company.setIndustry(companyIndustry);
+
+                        companyService.addCompany(company);
+                        System.out.println("Company added successfully.");
+                        break;
+
+                    case 4:
+                        List<Company> companies = companyService.getAllCompanies();
+                        for (Company c : companies) {
+                            System.out.println(c);
+                        }
+                        break;
+
+                    case 5:
+                        System.out.println("Enter student ID:");
+                        int studentId = scanner.nextInt();
+                        System.out.println("Enter company ID:");
+                        int compId = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+
+                        Application application = new Application();
+                        application.setStudentId(studentId);
+                        application.setCompanyId(compId);
+                        application.setStatus("Applied");
+
+                        applicationService.addApplication(application);
+                        System.out.println("Application submitted successfully.");
+                        break;
+
+                    case 6:
+                        System.out.println("Enter application ID:");
+                        int applicationId = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+                        System.out.println("Enter interview date (YYYY-MM-DD):");
+                        String interviewDate = scanner.nextLine();
+                        System.out.println("Enter interview time (HH:MM):");
+                        String interviewTime = scanner.nextLine();
+
+                        Interview interview = new Interview();
+                        interview.setApplicationId(applicationId);
+                        interview.setInterviewDate(LocalDate.parse(interviewDate));
+                        interview.setInterviewTime(interviewTime);
+                        interview.setStatus("Scheduled");
+
+                        interviewService.scheduleInterview(interview);
+                        System.out.println("Interview scheduled successfully.");
+                        break;
+
+                    case 7:
+                        System.out.println("Enter student ID:");
+                        int placedStudentId = scanner.nextInt();
+                        System.out.println("Enter company ID:");
+                        int placedCompanyId = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+                        System.out.println("Enter placement date (YYYY-MM-DD):");
+                        String placementDate = scanner.nextLine();
+                        System.out.println("Enter salary:");
+                        double salary = scanner.nextDouble();
+                        scanner.nextLine(); // Consume newline
+
+                        Placement placement = new Placement();
+                        placement.setStudentId(placedStudentId);
+                        placement.setCompanyId(placedCompanyId);
+                        placement.setPlacementDate(LocalDate.parse(placementDate));
+                        placement.setSalary(salary);
+
+                        placementService.addPlacement(placement);
+                        System.out.println("Placement added successfully.");
+                        break;
+
+                    case 8:
+                        System.out.println("Enter company ID:");
+                        int driveCompanyId = scanner.nextInt();
+                        scanner.nextLine(); // Consume newline
+                        System.out.println("Enter drive date (YYYY-MM-DD):");
+                        String driveDate = scanner.nextLine();
+                        System.out.println("Enter location:");
+                        String location = scanner.nextLine();
+                        System.out.println("Enter description:");
+                        String description = scanner.nextLine();
+
+                        PlacementDrive drive = new PlacementDrive();
+                        drive.setCompanyId(driveCompanyId);
+                        drive.setDriveDate(LocalDate.parse(driveDate));
+                        drive.setLocation(location);
+                        drive.setDescription(description);
+
+                        placementDriveService.addPlacementDrive(drive);
+                        System.out.println("Placement drive added successfully.");
+                        break;
+
+                    case 9:
+                        System.out.println("Exiting...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Database connection error.");
+        }
+    }
+}
+
+
+

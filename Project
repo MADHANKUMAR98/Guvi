@@ -223,3 +223,173 @@ public class Main {
         }
     }
 }
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentDAOImpl implements StudentDAO {
+
+    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
+    private static final String JDBC_USER = "your_username";
+    private static final String JDBC_PASSWORD = "your_password";
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
+    }
+
+    @Override
+    public void addStudent(Student student) throws Exception {
+        String sql = "INSERT INTO Students (student_id, name, email, phone, course, gpa) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, student.getStudentId());
+            preparedStatement.setString(2, student.getName());
+            preparedStatement.setString(3, student.getEmail());
+            preparedStatement.setString(4, student.getPhone());
+            preparedStatement.setString(5, student.getCourse());
+            preparedStatement.setDouble(6, student.getGpa());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new Exception("Error adding student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void updateStudent(Student student) throws Exception {
+        String sql = "UPDATE Students SET name = ?, email = ?, phone = ?, course = ?, gpa = ? WHERE student_id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, student.getName());
+            preparedStatement.setString(2, student.getEmail());
+            preparedStatement.setString(3, student.getPhone());
+            preparedStatement.setString(4, student.getCourse());
+            preparedStatement.setDouble(5, student.getGpa());
+            preparedStatement.setString(6, student.getStudentId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new Exception("Error updating student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void deleteStudent(String studentId) throws Exception {
+        String sql = "DELETE FROM Students WHERE student_id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, studentId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new Exception("Error deleting student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Student getStudentById(String studentId) throws Exception {
+        String sql = "SELECT * FROM Students WHERE student_id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, studentId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return new Student(
+                        resultSet.getString("student_id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("email"),
+                        resultSet.getString("phone"),
+                        resultSet.getString("course"),
+                        resultSet.getDouble("gpa")
+                    );
+                } else {
+                    throw new Exception("Student with ID " + studentId + " not found.");
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error retrieving student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Student> getAllStudents() throws Exception {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM Students";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                students.add(new Student(
+                    resultSet.getString("student_id"),
+                    resultSet.getString("name"),
+                    resultSet.getString("email"),
+                    resultSet.getString("phone"),
+                    resultSet.getString("course"),
+                    resultSet.getDouble("gpa")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
+        }
+        return students;
+    }
+}
+
+import java.util.List;
+
+public interface StudentService {
+    void addStudent(Student student) throws Exception;
+    Student getStudentById(String studentId) throws Exception;
+    List<Student> getAllStudents() throws Exception;
+    void updateStudent(Student student) throws Exception;
+    void deleteStudent(String studentId) throws Exception;
+}
+import java.util.List;
+
+public class StudentServiceImpl implements StudentService {
+
+    private StudentDAO studentDAO = new StudentDAOImpl();
+
+    @Override
+    public void addStudent(Student student) throws Exception {
+        try {
+            studentDAO.addStudent(student);
+        } catch (Exception e) {
+            throw new Exception("Error adding student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Student getStudentById(String studentId) throws Exception {
+        try {
+            return studentDAO.getStudentById(studentId);
+        } catch (Exception e) {
+            throw new Exception("Error retrieving student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Student> getAllStudents() throws Exception {
+        try {
+            return studentDAO.getAllStudents();
+        } catch (Exception e) {
+            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void updateStudent(Student student) throws Exception {
+        try {
+            studentDAO.updateStudent(student);
+        } catch (Exception e) {
+            throw new Exception("Error updating student: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void deleteStudent(String studentId) throws Exception {
+        try {
+            studentDAO.deleteStudent(studentId);
+        } catch (Exception e) {
+            throw new Exception("Error deleting student: " + e.getMessage(), e);
+        }
+    }
+}

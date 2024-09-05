@@ -1,591 +1,225 @@
-Here’s a complete project code structure based on the provided database schema for managing college placements, including DAO, service, and presentation layers. The code is provided in a single stretch for easier integration.
-
-### **1. Model Classes**
-
-**Student.java**
-```java
-public class Student {
-    private String studentId;
-    private String name;
-    private String email;
-    private String phone;
-    private String course;
-    private double gpa;
-
-    // Constructors, Getters, Setters, and toString()
-    public Student(String studentId, String name, String email, String phone, String course, double gpa) {
-        this.studentId = studentId;
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.course = course;
-        this.gpa = gpa;
-    }
-
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public String getCourse() { return course; }
-    public void setCourse(String course) { this.course = course; }
-
-    public double getGpa() { return gpa; }
-    public void setGpa(double gpa) { this.gpa = gpa; }
-
-    @Override
-    public String toString() {
-        return "Student [studentId=" + studentId + ", name=" + name + ", email=" + email + ", phone=" + phone
-                + ", course=" + course + ", gpa=" + gpa + "]";
-    }
-}
-```
-
-**Company.java**
-```java
-public class Company {
-    private String companyId;
-    private String name;
-    private String location;
-    private String industry;
-
-    // Constructors, Getters, Setters, and toString()
-    public Company(String companyId, String name, String location, String industry) {
-        this.companyId = companyId;
-        this.name = name;
-        this.location = location;
-        this.industry = industry;
-    }
-
-    public String getCompanyId() { return companyId; }
-    public void setCompanyId(String companyId) { this.companyId = companyId; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-
-    public String getIndustry() { return industry; }
-    public void setIndustry(String industry) { this.industry = industry; }
-
-    @Override
-    public String toString() {
-        return "Company [companyId=" + companyId + ", name=" + name + ", location=" + location + ", industry=" + industry + "]";
-    }
-}
-```
-
-**Application.java**
-```java
-import java.sql.Date;
-
-public class Application {
-    private String applicationId;
-    private String studentId;
-    private String companyId;
-    private String status;
-
-    // Constructors, Getters, Setters, and toString()
-    public Application(String applicationId, String studentId, String companyId, String status) {
-        this.applicationId = applicationId;
-        this.studentId = studentId;
-        this.companyId = companyId;
-        this.status = status;
-    }
-
-    public String getApplicationId() { return applicationId; }
-    public void setApplicationId(String applicationId) { this.applicationId = applicationId; }
-
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
-
-    public String getCompanyId() { return companyId; }
-    public void setCompanyId(String companyId) { this.companyId = companyId; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    @Override
-    public String toString() {
-        return "Application [applicationId=" + applicationId + ", studentId=" + studentId + ", companyId=" + companyId + ", status=" + status + "]";
-    }
-}
-```
-
-**Interview.java**
-```java
-import java.sql.Date;
-
-public class Interview {
-    private String interviewId;
-    private String applicationId;
-    private Date interviewDate;
-    private String status;
-
-    // Constructors, Getters, Setters, and toString()
-    public Interview(String interviewId, String applicationId, Date interviewDate, String status) {
-        this.interviewId = interviewId;
-        this.applicationId = applicationId;
-        this.interviewDate = interviewDate;
-        this.status = status;
-    }
-
-    public String getInterviewId() { return interviewId; }
-    public void setInterviewId(String interviewId) { this.interviewId = interviewId; }
-
-    public String getApplicationId() { return applicationId; }
-    public void setApplicationId(String applicationId) { this.applicationId = applicationId; }
-
-    public Date getInterviewDate() { return interviewDate; }
-    public void setInterviewDate(Date interviewDate) { this.interviewDate = interviewDate; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    @Override
-    public String toString() {
-        return "Interview [interviewId=" + interviewId + ", applicationId=" + applicationId + ", interviewDate=" + interviewDate + ", status=" + status + "]";
-    }
-}
-```
-
-**Placement.java**
-```java
-import java.sql.Date;
-
-public class Placement {
-    private String placementId;
-    private String studentId;
-    private String companyId;
-    private String jobRole;
-    private double packageAmount;
-    private Date placementDate;
-
-    // Constructors, Getters, Setters, and toString()
-    public Placement(String placementId, String studentId, String companyId, String jobRole, double packageAmount, Date placementDate) {
-        this.placementId = placementId;
-        this.studentId = studentId;
-        this.companyId = companyId;
-        this.jobRole = jobRole;
-        this.packageAmount = packageAmount;
-        this.placementDate = placementDate;
-    }
-
-    public String getPlacementId() { return placementId; }
-    public void setPlacementId(String placementId) { this.placementId = placementId; }
-
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
-
-    public String getCompanyId() { return companyId; }
-    public void setCompanyId(String companyId) { this.companyId = companyId; }
-
-    public String getJobRole() { return jobRole; }
-    public void setJobRole(String jobRole) { this.jobRole = jobRole; }
-
-    public double getPackageAmount() { return packageAmount; }
-    public void setPackageAmount(double packageAmount) { this.packageAmount = packageAmount; }
-
-    public Date getPlacementDate() { return placementDate; }
-    public void setPlacementDate(Date placementDate) { this.placementDate = placementDate; }
-
-    @Override
-    public String toString() {
-        return "Placement [placementId=" + placementId + ", studentId=" + studentId + ", companyId=" + companyId + ", jobRole=" + jobRole + ", packageAmount=" + packageAmount + ", placementDate=" + placementDate + "]";
-    }
-}
-```
-
-### **2. DAO Interfaces**
-
-**StudentDAO.java**
-```java
 import java.util.List;
+import java.util.Scanner;
 
-public interface StudentDAO {
-    void addStudent(Student student) throws Exception;
-    void updateStudent(Student student) throws Exception;
-    void deleteStudent(String studentId) throws Exception;
-    Student getStudentById(String studentId) throws Exception;
-    List<Student> getAllStudents() throws Exception;
-}
-```
+public class Main {
 
-**CompanyDAO.java**
-```java
-import java.util.List;
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final StudentService studentService = new StudentServiceImpl();
+    private static final CompanyService companyService = new CompanyServiceImpl();
+    private static final ApplicationService applicationService = new ApplicationServiceImpl();
+    private static final InterviewService interviewService = new InterviewServiceImpl();
+    private static final PlacementService placementService = new PlacementServiceImpl();
 
-public interface CompanyDAO {
-    void addCompany(Company company) throws Exception;
-    void updateCompany(Company company) throws Exception;
-    void deleteCompany(String companyId) throws Exception;
-    Company getCompanyById(String companyId) throws Exception;
-    List<Company> getAllCompanies() throws Exception;
-}
-```
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("College Placement Management System");
+            System.out.println("1. Add Student");
+            System.out.println("2. Add Company");
+            System.out.println("3. Add Application");
+            System.out.println("4. Schedule Interview");
+            System.out.println("5. Add Placement");
+            System.out.println("6. View All Students");
+            System.out.println("7. View All Companies");
+            System.out.println("8. View All Applications");
+            System.out.println("9. View All Interviews");
+            System.out.println("10. View All Placements");
+            System.out.println("11. Exit");
 
-**ApplicationDAO.java**
-```java
-import java.util.List;
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
-public interface ApplicationDAO {
-    void addApplication(Application application) throws Exception;
-    void updateApplication(Application application) throws Exception;
-    void deleteApplication(String applicationId) throws Exception;
-    Application getApplicationById(String applicationId) throws Exception;
-    List<Application> getAllApplications() throws Exception;
-}
-```
-
-**InterviewDAO.java**
-```java
-import java.util.List;
-
-public interface InterviewDAO {
-    void addInterview(Interview interview) throws Exception;
-    void updateInterview(Interview interview) throws Exception;
-    void deleteInterview(String interviewId) throws Exception;
-    Interview getInterviewById(String interviewId) throws Exception;
-    List<Interview> getAllInterviews() throws Exception;
-}
-```
-
-**PlacementDAO.java**
-```java
-import java.util.List;
-
-public interface PlacementDAO {
-    void addPlacement(Placement placement) throws Exception;
-    void updatePlacement(Placement placement) throws Exception;
-    void deletePlacement(String placementId) throws Exception;
-    Placement getPlacementById(String placementId) throws Exception;
-    List<Placement> getAllPlacements() throws Exception;
-}
-```
-
-### **3. DAO Implementations**
-
-**StudentDAOImpl.java**
-```java
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-Sure, let's continue with the DAO implementations.
-
-### **StudentDAOImpl.java**
-```java
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class StudentDAOImpl implements StudentDAO {
-
-    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
-    private static final String JDBC_USER = "your_username";
-    private static final String JDBC_PASSWORD = "your_password";
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
-    }
-
-    @Override
-    public void addStudent(Student student) throws Exception {
-        String sql = "INSERT INTO Students (student_id, name, email, phone, course, gpa) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getStudentId());
-            preparedStatement.setString(2, student.getName());
-            preparedStatement.setString(3, student.getEmail());
-            preparedStatement.setString(4, student.getPhone());
-            preparedStatement.setString(5, student.getCourse());
-            preparedStatement.setDouble(6, student.getGpa());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error adding student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void updateStudent(Student student) throws Exception {
-        String sql = "UPDATE Students SET name = ?, email = ?, phone = ?, course = ?, gpa = ? WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getName());
-            preparedStatement.setString(2, student.getEmail());
-            preparedStatement.setString(3, student.getPhone());
-            preparedStatement.setString(4, student.getCourse());
-            preparedStatement.setDouble(5, student.getGpa());
-            preparedStatement.setString(6, student.getStudentId());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error updating student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void deleteStudent(String studentId) throws Exception {
-        String sql = "DELETE FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error deleting student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Student getStudentById(String studentId) throws Exception {
-        String sql = "SELECT * FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Student(
-                        resultSet.getString("student_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("email"),
-                        resultSet.getString("phone"),
-                        resultSet.getString("course"),
-                        resultSet.getDouble("gpa")
-                    );
-                } else {
-                    throw new Exception("Student with ID " + studentId + " not found.");
-                }
+            switch (choice) {
+                case 1:
+                    addStudent();
+                    break;
+                case 2:
+                    addCompany();
+                    break;
+                case 3:
+                    addApplication();
+                    break;
+                case 4:
+                    scheduleInterview();
+                    break;
+                case 5:
+                    addPlacement();
+                    break;
+                case 6:
+                    viewAllStudents();
+                    break;
+                case 7:
+                    viewAllCompanies();
+                    break;
+                case 8:
+                    viewAllApplications();
+                    break;
+                case 9:
+                    viewAllInterviews();
+                    break;
+                case 10:
+                    viewAllPlacements();
+                    break;
+                case 11:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
             }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving student: " + e.getMessage(), e);
         }
     }
 
-    @Override
-    public List<Student> getAllStudents() throws Exception {
-        List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM Students";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                students.add(new Student(
-                    resultSet.getString("student_id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("email"),
-                    resultSet.getString("phone"),
-                    resultSet.getString("course"),
-                    resultSet.getDouble("gpa")
-                ));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
+    private static void addStudent() {
+        System.out.print("Enter student ID: ");
+        String studentId = scanner.nextLine();
+        System.out.print("Enter name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter email: ");
+        String email = scanner.nextLine();
+        System.out.print("Enter phone: ");
+        String phone = scanner.nextLine();
+        System.out.print("Enter course: ");
+        String course = scanner.nextLine();
+        System.out.print("Enter GPA: ");
+        double gpa = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline
+
+        try {
+            studentService.addStudent(new Student(studentId, name, email, phone, course, gpa));
+            System.out.println("Student added successfully.");
+        } catch (Exception e) {
+            System.out.println("Error adding student: " + e.getMessage());
         }
-        return students;
+    }
+
+    private static void addCompany() {
+        System.out.print("Enter company ID: ");
+        String companyId = scanner.nextLine();
+        System.out.print("Enter name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter location: ");
+        String location = scanner.nextLine();
+        System.out.print("Enter industry: ");
+        String industry = scanner.nextLine();
+
+        try {
+            companyService.addCompany(new Company(companyId, name, location, industry));
+            System.out.println("Company added successfully.");
+        } catch (Exception e) {
+            System.out.println("Error adding company: " + e.getMessage());
+        }
+    }
+
+    private static void addApplication() {
+        System.out.print("Enter application ID: ");
+        String applicationId = scanner.nextLine();
+        System.out.print("Enter student ID: ");
+        String studentId = scanner.nextLine();
+        System.out.print("Enter company ID: ");
+        String companyId = scanner.nextLine();
+        System.out.print("Enter status: ");
+        String status = scanner.nextLine();
+
+        try {
+            applicationService.addApplication(new Application(applicationId, studentId, companyId, status));
+            System.out.println("Application added successfully.");
+        } catch (Exception e) {
+            System.out.println("Error adding application: " + e.getMessage());
+        }
+    }
+
+    private static void scheduleInterview() {
+        System.out.print("Enter interview ID: ");
+        String interviewId = scanner.nextLine();
+        System.out.print("Enter application ID: ");
+        String applicationId = scanner.nextLine();
+        System.out.print("Enter interview date (YYYY-MM-DD): ");
+        String date = scanner.nextLine();
+        System.out.print("Enter status: ");
+        String status = scanner.nextLine();
+
+        try {
+            interviewService.addInterview(new Interview(interviewId, applicationId, Date.valueOf(date), status));
+            System.out.println("Interview scheduled successfully.");
+        } catch (Exception e) {
+            System.out.println("Error scheduling interview: " + e.getMessage());
+        }
+    }
+
+    private static void addPlacement() {
+        System.out.print("Enter placement ID: ");
+        String placementId = scanner.nextLine();
+        System.out.print("Enter student ID: ");
+        String studentId = scanner.nextLine();
+        System.out.print("Enter company ID: ");
+        String companyId = scanner.nextLine();
+        System.out.print("Enter job role: ");
+        String jobRole = scanner.nextLine();
+        System.out.print("Enter package amount: ");
+        double packageAmount = scanner.nextDouble();
+        System.out.print("Enter placement date (YYYY-MM-DD): ");
+        String date = scanner.nextLine();
+        scanner.nextLine(); // Consume newline
+
+        try {
+            placementService.addPlacement(new Placement(placementId, studentId, companyId, jobRole, packageAmount, Date.valueOf(date)));
+            System.out.println("Placement added successfully.");
+        } catch (Exception e) {
+            System.out.println("Error adding placement: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllStudents() {
+        try {
+            List<Student> students = studentService.getAllStudents();
+            for (Student student : students) {
+                System.out.println(student);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving students: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllCompanies() {
+        try {
+            List<Company> companies = companyService.getAllCompanies();
+            for (Company company : companies) {
+                System.out.println(company);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving companies: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllApplications() {
+        try {
+            List<Application> applications = applicationService.getAllApplications();
+            for (Application application : applications) {
+                System.out.println(application);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving applications: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllInterviews() {
+        try {
+            List<Interview> interviews = interviewService.getAllInterviews();
+            for (Interview interview : interviews) {
+                System.out.println(interview);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving interviews: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllPlacements() {
+        try {
+            List<Placement> placements = placementService.getAllPlacements();
+            for (Placement placement : placements) {
+                System.out.println(placement);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving placements: " + e.getMessage());
+        }
     }
 }
-```
-
-**CompanyDAOImpl.java**
-```java
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class CompanyDAOImpl implements CompanyDAO {
-
-    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
-    private static final String JDBC_USER = "your_username";
-    private static final String JDBC_PASSWORD = "your_password";
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
-    }
-
-    @Override
-    public void addCompany(Company company) throws Exception {
-        String sql = "INSERT INTO Companies (company_id, name, location, industry) VALUES (?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, company.getCompanyId());
-            preparedStatement.setString(2, company.getName());
-            preparedStatement.setString(3, company.getLocation());
-            preparedStatement.setString(4, company.getIndustry());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error adding company: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void updateCompany(Company company) throws Exception {
-        String sql = "UPDATE Companies SET name = ?, location = ?, industry = ? WHERE company_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, company.getName());
-            preparedStatement.setString(2, company.getLocation());
-            preparedStatement.setString(3, company.getIndustry());
-            preparedStatement.setString(4, company.getCompanyId());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error updating company: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void deleteCompany(String companyId) throws Exception {
-        String sql = "DELETE FROM Companies WHERE company_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, companyId);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error deleting company: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Company getCompanyById(String companyId) throws Exception {
-        String sql = "SELECT * FROM Companies WHERE company_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, companyId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Company(
-                        resultSet.getString("company_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("location"),
-                        resultSet.getString("industry")
-                    );
-                } else {
-                    throw new Exception("Company with ID " + companyId + " not found.");
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving company: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public List<Company> getAllCompanies() throws Exception {
-        List<Company> companies = new ArrayList<>();
-        String sql = "SELECT * FROM Companies";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                companies.add(new Company(
-                    resultSet.getString("company_id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("location"),
-                    resultSet.getString("industry")
-                ));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving all companies: " + e.getMessage(), e);
-        }
-        return companies;
-    }
-}
-```
-
-**ApplicationDAOImpl.java**
-```java
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class ApplicationDAOImpl implements ApplicationDAO {
-
-    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
-    private static final String JDBC_USER = "your_username";
-    private static final String JDBC_PASSWORD = "your_password";
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
-    }
-
-    @Override
-    public void addApplication(Application application) throws Exception {
-        String sql = "INSERT INTO Applications (application_id, student_id, company_id, status) VALUES (?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, application.getApplicationId());
-            preparedStatement.setString(2, application.getStudentId());
-            preparedStatement.setString(3, application.getCompanyId());
-            preparedStatement.setString(4, application.getStatus());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error adding application: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void updateApplication(Application application) throws Exception {
-        String sql = "UPDATE Applications SET student_id = ?, company_id = ?, status = ? WHERE application_id = ?";
-Certainly! Here’s the continuation of `PlacementDAOImpl.java`:
-
-**PlacementDAOImpl.java**
-```java
-    @Override
-    public Placement getPlacementById(String placementId) throws Exception {
-        String sql = "SELECT * FROM Placements WHERE placement_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, placementId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Placement(
-                        resultSet.getString("placement_id"),
-                        resultSet.getString("student_id"),
-                        resultSet.getString("company_id"),
-                        resultSet.getString("job_role"),
-                        resultSet.getDouble("package_amount"),
-                        resultSet.getDate("placement_date")
-                    );
-                } else {
-                    throw new Exception("Placement with ID " + placementId + " not found.");
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving placement: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public List<Placement> getAllPlacements() throws Exception {
-        List<Placement> placements = new ArrayList<>();
-        String sql = "SELECT * FROM Placements";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                placements.add(new Placement(
-                    resultSet.getString("placement_id"),
-                    resultSet.getString("student_id"),
-                    resultSet.getString("company_id"),
-                    resultSet.getString("job_role"),
-                    resultSet.getDouble("package_amount"),
-                    resultSet.getDate("placement_date")
-                ));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving all placements: " + e.getMessage(), e);
-        }
-        return placements;
-    }
-}
-```
-
-### Summary
-With the provided DAO implementations, you have a basic framework for managing CRUD operations in your college placement management system. Each DAO handles specific operations related to `Student`, `Company`, `Application`, `Interview`, and `Placement` entities.
-
-Make sure to replace `your_username` and `your_password` with actual database credentials, and ensure that your database schema matches the tables and columns referenced in these implementations. Adjust the error handling and logging as needed to fit your project's requirements.

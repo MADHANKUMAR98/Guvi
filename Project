@@ -1,65 +1,73 @@
+package presentation;
+
+import model.*;
+import service.*;
+import service.impl.*;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final StudentService studentService = new StudentServiceImpl();
-    private static final CompanyService companyService = new CompanyServiceImpl();
-    private static final ApplicationService applicationService = new ApplicationServiceImpl();
-    private static final InterviewService interviewService = new InterviewServiceImpl();
-    private static final PlacementService placementService = new PlacementServiceImpl();
+    private static StudentService studentService = new StudentServiceImpl();
+    private static CompanyService companyService = new CompanyServiceImpl();
+    private static ApplicationService applicationService = new ApplicationServiceImpl();
+    private static InterviewService interviewService = new InterviewServiceImpl();
+    private static PlacementService placementService = new PlacementServiceImpl();
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         while (true) {
-            System.out.println("College Placement Management System");
             System.out.println("1. Add Student");
-            System.out.println("2. Add Company");
-            System.out.println("3. Add Application");
-            System.out.println("4. Schedule Interview");
-            System.out.println("5. Add Placement");
-            System.out.println("6. View All Students");
-            System.out.println("7. View All Companies");
-            System.out.println("8. View All Applications");
-            System.out.println("9. View All Interviews");
-            System.out.println("10. View All Placements");
-            System.out.println("11. Exit");
-
+            System.out.println("2. View Student");
+            System.out.println("3. Add Company");
+            System.out.println("4. View Company");
+            System.out.println("5. Add Application");
+            System.out.println("6. View Applications by Student");
+            System.out.println("7. Add Interview");
+            System.out.println("8. View Interviews by Application");
+            System.out.println("9. Add Placement");
+            System.out.println("10. View Placements by Student");
+            System.out.println("11. View Placements by Company");
+            System.out.println("12. Exit");
+            System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();  // consume the newline
 
             switch (choice) {
                 case 1:
                     addStudent();
                     break;
                 case 2:
-                    addCompany();
+                    viewStudent();
                     break;
                 case 3:
-                    addApplication();
+                    addCompany();
                     break;
                 case 4:
-                    scheduleInterview();
+                    viewCompany();
                     break;
                 case 5:
-                    addPlacement();
+                    addApplication();
                     break;
                 case 6:
-                    viewAllStudents();
+                    viewApplicationsByStudent();
                     break;
                 case 7:
-                    viewAllCompanies();
+                    addInterview();
                     break;
                 case 8:
-                    viewAllApplications();
+                    viewInterviewsByApplication();
                     break;
                 case 9:
-                    viewAllInterviews();
+                    addPlacement();
                     break;
                 case 10:
-                    viewAllPlacements();
+                    viewPlacementsByStudent();
                     break;
                 case 11:
+                    viewPlacementsByCompany();
+                    break;
+                case 12:
                     System.out.println("Exiting...");
                     return;
                 default:
@@ -69,444 +77,780 @@ public class Main {
     }
 
     private static void addStudent() {
-        System.out.print("Enter student ID: ");
+        System.out.print("Enter Student ID: ");
         String studentId = scanner.nextLine();
-        System.out.print("Enter name: ");
+        System.out.print("Enter Name: ");
         String name = scanner.nextLine();
-        System.out.print("Enter email: ");
+        System.out.print("Enter Email: ");
         String email = scanner.nextLine();
-        System.out.print("Enter phone: ");
+        System.out.print("Enter Phone: ");
         String phone = scanner.nextLine();
-        System.out.print("Enter course: ");
+        System.out.print("Enter Course: ");
         String course = scanner.nextLine();
         System.out.print("Enter GPA: ");
         double gpa = scanner.nextDouble();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();  // consume the newline
 
-        try {
-            studentService.addStudent(new Student(studentId, name, email, phone, course, gpa));
-            System.out.println("Student added successfully.");
-        } catch (Exception e) {
-            System.out.println("Error adding student: " + e.getMessage());
+        Student student = new Student(studentId, name, email, phone, course, gpa);
+        studentService.addStudent(student);
+        System.out.println("Student added successfully.");
+    }
+
+    private static void viewStudent() {
+        System.out.print("Enter Student ID: ");
+        String studentId = scanner.nextLine();
+        Student student = studentService.getStudent(studentId);
+        if (student != null) {
+            System.out.println(student);
+        } else {
+            System.out.println("Student not found.");
         }
     }
 
     private static void addCompany() {
-        System.out.print("Enter company ID: ");
+        System.out.print("Enter Company ID: ");
         String companyId = scanner.nextLine();
-        System.out.print("Enter name: ");
+        System.out.print("Enter Name: ");
         String name = scanner.nextLine();
-        System.out.print("Enter location: ");
+        System.out.print("Enter Location: ");
         String location = scanner.nextLine();
-        System.out.print("Enter industry: ");
+        System.out.print("Enter Industry: ");
         String industry = scanner.nextLine();
 
-        try {
-            companyService.addCompany(new Company(companyId, name, location, industry));
-            System.out.println("Company added successfully.");
-        } catch (Exception e) {
-            System.out.println("Error adding company: " + e.getMessage());
+        Company company = new Company(companyId, name, location, industry);
+        companyService.addCompany(company);
+        System.out.println("Company added successfully.");
+    }
+
+    private static void viewCompany() {
+        System.out.print("Enter Company ID: ");
+        String companyId = scanner.nextLine();
+        Company company = companyService.getCompany(companyId);
+        if (company != null) {
+            System.out.println(company);
+        } else {
+            System.out.println("Company not found.");
         }
     }
 
     private static void addApplication() {
-        System.out.print("Enter application ID: ");
+        System.out.print("Enter Application ID: ");
         String applicationId = scanner.nextLine();
-        System.out.print("Enter student ID: ");
+        System.out.print("Enter Student ID: ");
         String studentId = scanner.nextLine();
-        System.out.print("Enter company ID: ");
+        System.out.print("Enter Company ID: ");
         String companyId = scanner.nextLine();
-        System.out.print("Enter status: ");
+        System.out.print("Enter Status: ");
         String status = scanner.nextLine();
 
-        try {
-            applicationService.addApplication(new Application(applicationId, studentId, companyId, status));
-            System.out.println("Application added successfully.");
-        } catch (Exception e) {
-            System.out.println("Error adding application: " + e.getMessage());
+        Application application = new Application(applicationId, studentId, companyId, status);
+        applicationService.addApplication(application);
+        System.out.println("Application added successfully.");
+    }
+
+    private static void viewApplicationsByStudent() {
+        System.out.print("Enter Student ID: ");
+        String studentId = scanner.nextLine();
+        List<Application> applications = applicationService.getApplicationsByStudent(studentId);
+        for (Application application : applications) {
+            System.out.println(application);
         }
     }
 
-    private static void scheduleInterview() {
-        System.out.print("Enter interview ID: ");
+    private static void addInterview() {
+        System.out.print("Enter Interview ID: ");
         String interviewId = scanner.nextLine();
-        System.out.print("Enter application ID: ");
+        System.out.print("Enter Application ID: ");
         String applicationId = scanner.nextLine();
-        System.out.print("Enter interview date (YYYY-MM-DD): ");
-        String date = scanner.nextLine();
-        System.out.print("Enter status: ");
+        System.out.print("Enter Interview Date (YYYY-MM-DD): ");
+        String dateString = scanner.nextLine();
+        java.util.Date interviewDate = java.sql.Date.valueOf(dateString);
+        System.out.print("Enter Status: ");
         String status = scanner.nextLine();
 
-        try {
-            interviewService.addInterview(new Interview(interviewId, applicationId, Date.valueOf(date), status));
-            System.out.println("Interview scheduled successfully.");
-        } catch (Exception e) {
-            System.out.println("Error scheduling interview: " + e.getMessage());
+        Interview interview = new Interview(interviewId, applicationId, interviewDate, status);
+        interviewService.addInterview(interview);
+        System.out.println("Interview added successfully.");
+    }
+
+    private static void viewInterviewsByApplication() {
+        System.out.print("Enter Application ID: ");
+        String applicationId = scanner.nextLine();
+        List<Interview> interviews = interviewService.getInterviewsByApplication(applicationId);
+        for (Interview interview : interviews) {
+            System.out.println(interview);
         }
     }
 
     private static void addPlacement() {
-        System.out.print("Enter placement ID: ");
+        System.out.print("Enter Placement ID: ");
         String placementId = scanner.nextLine();
-        System.out.print("Enter student ID: ");
+        System.out.print("Enter Student ID: ");
         String studentId = scanner.nextLine();
-        System.out.print("Enter company ID: ");
+        System.out.print("Enter Company ID: ");
         String companyId = scanner.nextLine();
-        System.out.print("Enter job role: ");
+        System.out.print("Enter Job Role: ");
         String jobRole = scanner.nextLine();
-        System.out.print("Enter package amount: ");
-        double packageAmount = scanner.nextDouble();
-        System.out.print("Enter placement date (YYYY-MM-DD): ");
-        String date = scanner.nextLine();
-        scanner.nextLine(); // Consume newline
+        System.out.print("Enter Salary Package: ");
+        double salaryPackage = scanner.nextDouble();
+        System.out.print("Enter Placement Date (YYYY-MM-DD): ");
+        String dateString = scanner.nextLine();
+        java.util.Date placementDate = java.sql.Date.valueOf(dateString);
 
-        try {
-            placementService.addPlacement(new Placement(placementId, studentId, companyId, jobRole, packageAmount, Date.valueOf(date)));
-            System.out.println("Placement added successfully.");
-        } catch (Exception e) {
-            System.out.println("Error adding placement: " + e.getMessage());
+        Placement placement = new Placement(placementId, studentId, companyId, jobRole, salaryPackage, placementDate);
+        placementService.addPlacement(placement);
+        System.out.println("Placement added successfully.");
+    }
+
+    private static void viewPlacementsByStudent() {
+        System.out.print("Enter Student ID: ");
+        String studentId = scanner.nextLine();
+        List<Placement> placements = placementService.getPlacementsByStudent(studentId);
+        for (Placement placement : placements) {
+            System.out.println(placement);
         }
     }
 
-    private static void viewAllStudents() {
-        try {
-            List<Student> students = studentService.getAllStudents();
-            for (Student student : students) {
-                System.out.println(student);
-            }
-        } catch (Exception e) {
-            System.out.println("Error retrieving students: " + e.getMessage());
-        }
-    }
-
-    private static void viewAllCompanies() {
-        try {
-            List<Company> companies = companyService.getAllCompanies();
-            for (Company company : companies) {
-                System.out.println(company);
-            }
-        } catch (Exception e) {
-            System.out.println("Error retrieving companies: " + e.getMessage());
-        }
-    }
-
-    private static void viewAllApplications() {
-        try {
-            List<Application> applications = applicationService.getAllApplications();
-            for (Application application : applications) {
-                System.out.println(application);
-            }
-        } catch (Exception e) {
-            System.out.println("Error retrieving applications: " + e.getMessage());
-        }
-    }
-
-    private static void viewAllInterviews() {
-        try {
-            List<Interview> interviews = interviewService.getAllInterviews();
-            for (Interview interview : interviews) {
-                System.out.println(interview);
-            }
-        } catch (Exception e) {
-            System.out.println("Error retrieving interviews: " + e.getMessage());
-        }
-    }
-
-    private static void viewAllPlacements() {
-        try {
-            List<Placement> placements = placementService.getAllPlacements();
-            for (Placement placement : placements) {
-                System.out.println(placement);
-            }
-        } catch (Exception e) {
-            System.out.println("Error retrieving placements: " + e.getMessage());
+    private static void viewPlacementsByCompany() {
+        System.out.print("Enter Company ID: ");
+        String companyId = scanner.nextLine();
+        List<Placement> placements = placementService.getPlacementsByCompany(companyId);
+        for (Placement placement : placements) {
+            System.out.println(placement);
         }
     }
 }
+package service.impl;
 
-import java.sql.*;
-import java.util.ArrayList;
+import dao.PlacementDAO;
+import dao.impl.PlacementDAOImpl;
+import model.Placement;
+import service.PlacementService;
 import java.util.List;
 
-public class StudentDAOImpl implements StudentDAO {
+public class PlacementServiceImpl implements PlacementService {
+    private PlacementDAO placementDAO = new PlacementDAOImpl();
 
-    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
-    private static final String JDBC_USER = "your_username";
-    private static final String JDBC_PASSWORD = "your_password";
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
+    @Override
+    public void addPlacement(Placement placement) {
+        placementDAO.addPlacement(placement);
     }
 
     @Override
-    public void addStudent(Student student) throws Exception {
-        String sql = "INSERT INTO Students (student_id, name, email, phone, course, gpa) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getStudentId());
-            preparedStatement.setString(2, student.getName());
-            preparedStatement.setString(3, student.getEmail());
-            preparedStatement.setString(4, student.getPhone());
-            preparedStatement.setString(5, student.getCourse());
-            preparedStatement.setDouble(6, student.getGpa());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error adding student: " + e.getMessage(), e);
-        }
+    public Placement getPlacement(String placementId) {
+        return placementDAO.getPlacement(placementId);
     }
 
     @Override
-    public void updateStudent(Student student) throws Exception {
-        String sql = "UPDATE Students SET name = ?, email = ?, phone = ?, course = ?, gpa = ? WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getName());
-            preparedStatement.setString(2, student.getEmail());
-            preparedStatement.setString(3, student.getPhone());
-            preparedStatement.setString(4, student.getCourse());
-            preparedStatement.setDouble(5, student.getGpa());
-            preparedStatement.setString(6, student.getStudentId());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error updating student: " + e.getMessage(), e);
-        }
+    public List<Placement> getPlacementsByStudent(String studentId) {
+        return placementDAO.getPlacementsByStudent(studentId);
     }
 
     @Override
-    public void deleteStudent(String studentId) throws Exception {
-        String sql = "DELETE FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error deleting student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Student getStudentById(String studentId) throws Exception {
-        String sql = "SELECT * FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Student(
-                        resultSet.getString("student_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("email"),
-                        resultSet.getString("phone"),
-                        resultSet.getString("course"),
-                        resultSet.getDouble("gpa")
-                    );
-                } else {
-                    throw new Exception("Student with ID " + studentId + " not found.");
-                }
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public List<Student> getAllStudents() throws Exception {
-        List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM Students";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
-                students.add(new Student(
-                    resultSet.getString("student_id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("email"),
-                    resultSet.getString("phone"),
-                    resultSet.getString("course"),
-                    resultSet.getDouble("gpa")
-                ));
-            }
-        } catch (SQLException e) {
-            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
-        }
-        return students;
+    public List<Placement> getPlacementsByCompany(String companyId) {
+        return placementDAO.getPlacementsByCompany(companyId);
     }
 }
 
+package service;
+
+import model.Placement;
 import java.util.List;
 
-public interface StudentService {
-    void addStudent(Student student) throws Exception;
-    Student getStudentById(String studentId) throws Exception;
-    List<Student> getAllStudents() throws Exception;
-    void updateStudent(Student student) throws Exception;
-    void deleteStudent(String studentId) throws Exception;
+public interface PlacementService {
+    void addPlacement(Placement placement);
+    Placement getPlacement(String placementId);
+    List<Placement> getPlacementsByStudent(String studentId);
+    List<Placement> getPlacementsByCompany(String companyId);
 }
+
+package service.impl;
+
+import dao.InterviewDAO;
+import dao.impl.InterviewDAOImpl;
+import model.Interview;
+import service.InterviewService;
+import java.util.List;
+
+public class InterviewServiceImpl implements InterviewService {
+    private InterviewDAO interviewDAO = new InterviewDAOImpl();
+
+    @Override
+    public void addInterview(Interview interview) {
+        interviewDAO.addInterview(interview);
+    }
+
+    @Override
+    public Interview getInterview(String interviewId) {
+        return interviewDAO.getInterview(interviewId);
+    }
+
+    @Override
+    public List<Interview> getInterviewsByApplication(String applicationId) {
+        return interviewDAO.getInterviewsByApplication(applicationId);
+    }
+}
+
+package service;
+
+import model.Interview;
+import java.util.List;
+
+public interface InterviewService {
+    void addInterview(Interview interview);
+    Interview getInterview(String interviewId);
+    List<Interview> getInterviewsByApplication(String applicationId);
+}
+
+
+package service.impl;
+
+import dao.ApplicationDAO;
+import dao.impl.ApplicationDAOImpl;
+import model.Application;
+import service.ApplicationService;
+import java.util.List;
+
+public class ApplicationServiceImpl implements ApplicationService {
+    private ApplicationDAO applicationDAO = new ApplicationDAOImpl();
+
+    @Override
+    public void addApplication(Application application) {
+        applicationDAO.addApplication(application);
+    }
+
+    @Override
+    public Application getApplication(String applicationId) {
+        return applicationDAO.getApplication(applicationId);
+    }
+
+    @Override
+    public List<Application> getApplicationsByStudent(String studentId) {
+        return applicationDAO.getApplicationsByStudent(studentId);
+    }
+}
+
+package service;
+
+import model.Application;
+import java.util.List;
+
+public interface ApplicationService {
+    void addApplication(Application application);
+    Application getApplication(String applicationId);
+    List<Application> getApplicationsByStudent(String studentId);
+}
+
+package service.impl;
+
+import dao.CompanyDAO;
+import dao.impl.CompanyDAOImpl;
+import model.Company;
+import service.CompanyService;
+import java.util.List;
+
+public class CompanyServiceImpl implements CompanyService {
+    private CompanyDAO companyDAO = new CompanyDAOImpl();
+
+    @Override
+    public void addCompany(Company company) {
+        companyDAO.addCompany(company);
+    }
+
+    @Override
+    public Company getCompany(String companyId) {
+        return companyDAO.getCompany(companyId);
+    }
+
+    @Override
+    public List<Company> getAllCompanies() {
+        return companyDAO.getAllCompanies();
+    }
+}
+
+package service.impl;
+
+import dao.StudentDAO;
+import dao.impl.StudentDAOImpl;
+import model.Student;
+import service.StudentService;
 import java.util.List;
 
 public class StudentServiceImpl implements StudentService {
-
     private StudentDAO studentDAO = new StudentDAOImpl();
 
     @Override
-    public void addStudent(Student student) throws Exception {
-        try {
-            studentDAO.addStudent(student);
-        } catch (Exception e) {
-            throw new Exception("Error adding student: " + e.getMessage(), e);
-        }
+    public void addStudent(Student student) {
+        studentDAO.addStudent(student);
     }
 
     @Override
-    public Student getStudentById(String studentId) throws Exception {
-        try {
-            return studentDAO.getStudentById(studentId);
-        } catch (Exception e) {
-            throw new Exception("Error retrieving student: " + e.getMessage(), e);
-        }
+    public Student getStudent(String studentId) {
+        return studentDAO.getStudent(studentId);
     }
 
     @Override
-    public List<Student> getAllStudents() throws Exception {
-        try {
-            return studentDAO.getAllStudents();
-        } catch (Exception e) {
-            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void updateStudent(Student student) throws Exception {
-        try {
-            studentDAO.updateStudent(student);
-        } catch (Exception e) {
-            throw new Exception("Error updating student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void deleteStudent(String studentId) throws Exception {
-        try {
-            studentDAO.deleteStudent(studentId);
-        } catch (Exception e) {
-            throw new Exception("Error deleting student: " + e.getMessage(), e);
-        }
+    public List<Student> getAllStudents() {
+        return studentDAO.getAllStudents();
     }
 }
+
+package service;
+
+import model.Student;
+import java.util.List;
+
+public interface StudentService {
+    void addStudent(Student student);
+    Student getStudent(String studentId);
+    List<Student> getAllStudents();
+}
+
+
+package dao.impl;
+
+import dao.PlacementDAO;
+import model.Placement;
+import db.DBConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlacementDAOImpl implements PlacementDAO {
+
+    @Override
+    public void addPlacement(Placement placement) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO PMS_Placements (placement_id, student_id, company_id, job_role, salary_package, placement_date) VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, placement.getPlacementId());
+            stmt.setString(2, placement.getStudentId());
+            stmt.setString(3, placement.getCompanyId());
+            stmt.setString(4, placement.getJobRole());
+            stmt.setDouble(5, placement.getSalaryPackage());
+            stmt.setDate(6, new java.sql.Date(placement.getPlacementDate().getTime()));
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Placement getPlacement(String placementId) {
+        Placement placement = null;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Placements WHERE placement_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, placementId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                placement = new Placement(
+                    rs.getString("placement_id"),
+                    rs.getString("student_id"),
+                    rs.getString("company_id"),
+                    rs.getString("job_role"),
+                    rs.getDouble("salary_package"),
+                    rs.getDate("placement_date")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return placement;
+    }
+
+    @Override
+    public List<Placement> getPlacementsByStudent(String studentId) {
+        List<Placement> placements = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Placements WHERE student_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, studentId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                placements.add(new Placement(
+                    rs.getString("placement_id"),
+                    rs.getString("student_id"),
+                    rs.getString("company_id"),
+                    rs.getString("job_role"),
+                    rs.getDouble("salary_package"),
+                    rs.getDate("placement_date")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return placements;
+    }
+
+    @Override
+    public List<Placement> getPlacementsByCompany(String companyId) {
+        List<Placement> placements = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Placements WHERE company_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, companyId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                placements.add(new Placement(
+                    rs.getString("placement_id"),
+                    rs.getString("student_id"),
+                    rs.getString("company_id"),
+                    rs.getString("job_role"),
+                    rs.getDouble("salary_package"),
+                    rs.getDate("placement_date")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return placements;
+    }
+}
+
+package dao;
+
+import model.Placement;
+import java.util.List;
+
+public interface PlacementDAO {
+    void addPlacement(Placement placement);
+    Placement getPlacement(String placementId);
+    List<Placement> getPlacementsByStudent(String studentId);
+    List<Placement> getPlacementsByCompany(String companyId);
+}
+
+package dao.impl;
+
+import dao.InterviewDAO;
+import model.Interview;
+import db.DBConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class InterviewDAOImpl implements InterviewDAO {
+
+    @Override
+    public void addInterview(Interview interview) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO PMS_Interviews (interview_id, application_id, interview_date, status) VALUES (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, interview.getInterviewId());
+            stmt.setString(2, interview.getApplicationId());
+            stmt.setDate(3, new java.sql.Date(interview.getInterviewDate().getTime()));
+            stmt.setString(4, interview.getStatus());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Interview getInterview(String interviewId) {
+        Interview interview = null;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Interviews WHERE interview_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, interviewId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                interview = new Interview(
+                    rs.getString("interview_id"),
+                    rs.getString("application_id"),
+                    rs.getDate("interview_date"),
+                    rs.getString("status")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return interview;
+    }
+
+    @Override
+    public List<Interview> getInterviewsByApplication(String applicationId) {
+        List<Interview> interviews = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Interviews WHERE application_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, applicationId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                interviews.add(new Interview(
+                    rs.getString("interview_id"),
+                    rs.getString("application_id"),
+                    rs.getDate("interview_date"),
+                    rs.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return interviews;
+    }
+}
+
+package dao;
+
+import model.Interview;
+import java.util.List;
+
+public interface InterviewDAO {
+    void addInterview(Interview interview);
+    Interview getInterview(String interviewId);
+    List<Interview> getInterviewsByApplication(String applicationId);
+}
+
+package dao.impl;
+
+import dao.ApplicationDAO;
+import model.Application;
+import db.DBConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ApplicationDAOImpl implements ApplicationDAO {
+
+    @Override
+    public void addApplication(Application application) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO PMS_Applications (application_id, student_id, company_id, status) VALUES (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, application.getApplicationId());
+            stmt.setString(2, application.getStudentId());
+            stmt.setString(3, application.getCompanyId());
+            stmt.setString(4, application.getStatus());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Application getApplication(String applicationId) {
+        Application application = null;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Applications WHERE application_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, applicationId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                application = new Application(
+                    rs.getString("application_id"),
+                    rs.getString("student_id"),
+                    rs.getString("company_id"),
+                    rs.getString("status")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return application;
+    }
+
+    @Override
+    public List<Application> getApplicationsByStudent(String studentId) {
+        List<Application> applications = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Applications WHERE student_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, studentId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                applications.add(new Application(
+                    rs.getString("application_id"),
+                    rs.getString("student_id"),
+                    rs.getString("company_id"),
+                    rs.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return applications;
+    }
+}
+
+
+package dao;
+
+import model.Application;
+import java.util.List;
+
+public interface ApplicationDAO {
+    void addApplication(Application application);
+    Application getApplication(String applicationId);
+    List<Application> getApplicationsByStudent(String studentId);
+}
+
+
+package dao.impl;
+
+import dao.CompanyDAO;
+import model.Company;
+import db.DBConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CompanyDAOImpl implements CompanyDAO {
+
+    @Override
+    public void addCompany(Company company) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO PMS_Companies (company_id, name, location, industry) VALUES (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, company.getCompanyId());
+            stmt.setString(2, company.getName());
+            stmt.setString(3, company.getLocation());
+            stmt.setString(4, company.getIndustry());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Company getCompany(String companyId) {
+        Company company = null;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Companies WHERE company_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, companyId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                company = new Company(
+                    rs.getString("company_id"),
+                    rs.getString("name"),
+                    rs.getString("location"),
+                    rs.getString("industry")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return company;
+    }
+
+    @Override
+    public List<Company> getAllCompanies() {
+        List<Company> companies = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Companies";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                companies.add(new Company(
+                    rs.getString("company_id"),
+                    rs.getString("name"),
+                    rs.getString("location"),
+                    rs.getString("industry")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return companies;
+    }
+}
+package dao;
+
+import model.Company;
+import java.util.List;
+
+public interface CompanyDAO {
+    void addCompany(Company company);
+    Company getCompany(String companyId);
+    List<Company> getAllCompanies();
+}
+
+package dao.impl;
+
+import dao.StudentDAO;
+import model.Student;
+import db.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StudentDAOImpl implements StudentDAO {
 
-    private static final String JDBC_URL = "jdbc:oracle:thin:@localhost:1521:xe";
-    private static final String JDBC_USER = "your_username";
-    private static final String JDBC_PASSWORD = "your_password";
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
-    }
-
     @Override
-    public void addStudent(Student student) throws Exception {
-        String sql = "INSERT INTO Students (student_id, name, email, phone, course, gpa) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getStudentId());
-            preparedStatement.setString(2, student.getName());
-            preparedStatement.setString(3, student.getEmail());
-            preparedStatement.setString(4, student.getPhone());
-            preparedStatement.setString(5, student.getCourse());
-            preparedStatement.setDouble(6, student.getGpa());
-            preparedStatement.executeUpdate();
+    public void addStudent(Student student) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO PMS_Students (student_id, name, email, phone, course, gpa) VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, student.getStudentId());
+            stmt.setString(2, student.getName());
+            stmt.setString(3, student.getEmail());
+            stmt.setString(4, student.getPhone());
+            stmt.setString(5, student.getCourse());
+            stmt.setDouble(6, student.getGpa());
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new Exception("Error adding student: " + e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 
     @Override
-    public void updateStudent(Student student) throws Exception {
-        String sql = "UPDATE Students SET name = ?, email = ?, phone = ?, course = ?, gpa = ? WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, student.getName());
-            preparedStatement.setString(2, student.getEmail());
-            preparedStatement.setString(3, student.getPhone());
-            preparedStatement.setString(4, student.getCourse());
-            preparedStatement.setDouble(5, student.getGpa());
-            preparedStatement.setString(6, student.getStudentId());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error updating student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void deleteStudent(String studentId) throws Exception {
-        String sql = "DELETE FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new Exception("Error deleting student: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Student getStudentById(String studentId) throws Exception {
-        String sql = "SELECT * FROM Students WHERE student_id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, studentId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Student(
-                        resultSet.getString("student_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("email"),
-                        resultSet.getString("phone"),
-                        resultSet.getString("course"),
-                        resultSet.getDouble("gpa")
-                    );
-                } else {
-                    throw new Exception("Student with ID " + studentId + " not found.");
-                }
+    public Student getStudent(String studentId) {
+        Student student = null;
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Students WHERE student_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, studentId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                student = new Student(
+                    rs.getString("student_id"),
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("course"),
+                    rs.getDouble("gpa")
+                );
             }
         } catch (SQLException e) {
-            throw new Exception("Error retrieving student: " + e.getMessage(), e);
+            e.printStackTrace();
         }
+        return student;
     }
 
     @Override
-    public List<Student> getAllStudents() throws Exception {
+    public List<Student> getAllStudents() {
         List<Student> students = new ArrayList<>();
-        String sql = "SELECT * FROM Students";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next()) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "SELECT * FROM PMS_Students";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
                 students.add(new Student(
-                    resultSet.getString("student_id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("email"),
-                    resultSet.getString("phone"),
-                    resultSet.getString("course"),
-                    resultSet.getDouble("gpa")
+                    rs.getString("student_id"),
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("course"),
+                    rs.getDouble("gpa")
                 ));
             }
         } catch (SQLException e) {
-            throw new Exception("Error retrieving all students: " + e.getMessage(), e);
+            e.printStackTrace();
         }
         return students;
     }
 }
+
+
+package dao;
+
+import model.Student;
 import java.util.List;
 
 public interface StudentDAO {
-    void addStudent(Student student) throws Exception;
-    void updateStudent(Student student) throws Exception;
-    void deleteStudent(String studentId) throws Exception;
-    Student getStudentById(String studentId) throws Exception;
-    List<Student> getAllStudents() throws Exception;
+    void addStudent(Student student);
+    Student getStudent(String studentId);
+    List<Student> getAllStudents();
 }
+

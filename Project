@@ -1,3 +1,49 @@
+package service.impl;
+
+import dao.CompanyDAO;
+import dao.impl.CompanyDAOImpl;
+import model.Company;
+import service.CompanyService;
+
+import java.sql.SQLException;
+import java.util.List;
+
+public class CompanyServiceImpl implements CompanyService {
+
+    private CompanyDAO companyDAO;
+
+    // Constructor injection
+    public CompanyServiceImpl() {
+        this.companyDAO = new CompanyDAOImpl();
+    }
+
+    @Override
+    public void addCompany(Company company) throws SQLException {
+        if (companyDAO != null) {
+            companyDAO.addCompany(company);
+        } else {
+            throw new IllegalStateException("CompanyDAO has not been initialized.");
+        }
+    }
+
+    @Override
+    public Company getCompanyById(String id) throws SQLException {
+        if (companyDAO != null) {
+            return companyDAO.getCompany(id);
+        } else {
+            throw new IllegalStateException("CompanyDAO has not been initialized.");
+        }
+    }
+
+    @Override
+    public List<Company> getAllCompanies() throws SQLException {
+        if (companyDAO != null) {
+            return companyDAO.getAllCompanies();
+        } else {
+            throw new IllegalStateException("CompanyDAO has not been initialized.");
+        }
+    }
+}
 
 
 

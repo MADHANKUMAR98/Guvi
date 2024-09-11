@@ -942,4 +942,292 @@ Let me know if you need any further modifications or explanations!
 
 
 
+Here's how to create the entity classes corresponding to each table in your Oracle database using Spring Boot's JPA. These entities will map to your database tables in a real-time electricity billing system project.
 
+### **1. Customer Entity (EBS_Customer)**
+
+```java
+@Entity
+@Table(name = "EBS_CUSTOMER")
+public class Customer {
+
+    @Id
+    @Column(name = "CUSTOMER_ID")
+    private String customerId;
+
+    @Column(name = "NAME")
+    private String name;
+
+    @Column(name = "EMAIL", unique = true)
+    private String email;
+
+    @Column(name = "PHONE")
+    private String phone;
+
+    @Column(name = "PASSWORD")
+    private String password;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "ADDRESS_ID", referencedColumnName = "ADDRESS_ID")
+    private Address address;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<Bill> bills;
+
+    // Getters and setters
+}
+```
+
+### **2. Address Entity (EBS_Address)**
+
+```java
+@Entity
+@Table(name = "EBS_ADDRESS")
+public class Address {
+
+    @Id
+    @Column(name = "ADDRESS_ID")
+    private String addressId;
+
+    @Column(name = "HOUSE_NUMBER")
+    private String houseNumber;
+
+    @Column(name = "STREET_NAME")
+    private String streetName;
+
+    @Column(name = "AREA_NAME")
+    private String areaName;
+
+    @Column(name = "CITY")
+    private String city;
+
+    @Column(name = "STATE")
+    private String state;
+
+    @Column(name = "PINCODE")
+    private String pincode;
+
+    // Getters and setters
+}
+```
+
+### **3. Bill Entity (EBS_Bill)**
+
+```java
+@Entity
+@Table(name = "EBS_BILL")
+public class Bill {
+
+    @Id
+    @Column(name = "BILL_ID")
+    private String billId;
+
+    @Column(name = "BILL_MONTH")
+    private String billMonth;
+
+    @Column(name = "ELECTRICITY_USED")
+    private int electricityUsed;
+
+    @Column(name = "AMOUNT")
+    private double amount;
+
+    @Column(name = "STATUS")
+    private String status;  // Pending, Paid
+
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID", referencedColumnName = "CUSTOMER_ID")
+    private Customer customer;
+
+    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL)
+    private List<Payment> payments;
+
+    // Getters and setters
+}
+```
+
+### **4. Payment Entity (EBS_Payment)**
+
+```java
+@Entity
+@Table(name = "EBS_PAYMENT")
+public class Payment {
+
+    @Id
+    @Column(name = "PAYMENT_ID")
+    private String paymentId;
+
+    @Column(name = "AMOUNT_PAID")
+    private double amountPaid;
+
+    @Column(name = "PAYMENT_MODE")
+    private String paymentMode;  // e.g., Debit Card, Credit Card, UPI, etc.
+
+    @Column(name = "PAYMENT_TYPE")
+    private String paymentType;  // e.g., Visa, MasterCard, etc.
+
+    @ManyToOne
+    @JoinColumn(name = "BILL_ID", referencedColumnName = "BILL_ID")
+    private Bill bill;
+
+    // Getters and setters
+}
+```
+
+### **5. Admin Entity (EBS_Admin)**
+
+```java
+@Entity
+@Table(name = "EBS_ADMIN")
+public class Admin {
+
+    @Id
+    @Column(name = "ADMIN_ID")
+    private String adminId;
+
+    @Column(name = "USERNAME", unique = true)
+    private String username;
+
+    @Column(name = "PASSWORD")
+    private String password;
+
+    // Getters and setters
+}
+```
+
+### **6. Database Table Creation Scripts**
+
+Here are the Oracle DB scripts for creating the tables:
+
+#### 1. `EBS_CUSTOMER` Table
+
+```sql
+CREATE TABLE EBS_CUSTOMER (
+    CUSTOMER_ID VARCHAR2(50) PRIMARY KEY,
+    NAME VARCHAR2(100),
+    EMAIL VARCHAR2(100) UNIQUE,
+    PHONE VARCHAR2(20),
+    PASSWORD VARCHAR2(100),
+    ADDRESS_ID VARCHAR2(50),
+    FOREIGN KEY (ADDRESS_ID) REFERENCES EBS_ADDRESS(ADDRESS_ID)
+);
+```
+
+#### 2. `EBS_ADDRESS` Table
+
+```sql
+CREATE TABLE EBS_ADDRESS (
+    ADDRESS_ID VARCHAR2(50) PRIMARY KEY,
+    HOUSE_NUMBER VARCHAR2(20),
+    STREET_NAME VARCHAR2(100),
+    AREA_NAME VARCHAR2(100),
+    CITY VARCHAR2(100),
+    STATE VARCHAR2(100),
+    PINCODE VARCHAR2(10)
+);
+```
+
+#### 3. `EBS_BILL` Table
+
+```sql
+CREATE TABLE EBS_BILL (
+    BILL_ID VARCHAR2(50) PRIMARY KEY,
+    BILL_MONTH VARCHAR2(20),
+    ELECTRICITY_USED NUMBER,
+    AMOUNT NUMBER(10, 2),
+    STATUS VARCHAR2(20),
+    CUSTOMER_ID VARCHAR2(50),
+    FOREIGN KEY (CUSTOMER_ID) REFERENCES EBS_CUSTOMER(CUSTOMER_ID)
+);
+```
+
+#### 4. `EBS_PAYMENT` Table
+
+```sql
+CREATE TABLE EBS_PAYMENT (
+    PAYMENT_ID VARCHAR2(50) PRIMARY KEY,
+    AMOUNT_PAID NUMBER(10, 2),
+    PAYMENT_MODE VARCHAR2(50),
+    PAYMENT_TYPE VARCHAR2(50),
+    BILL_ID VARCHAR2(50),
+    FOREIGN KEY (BILL_ID) REFERENCES EBS_BILL(BILL_ID)
+);
+```
+
+#### 5. `EBS_ADMIN` Table
+
+```sql
+CREATE TABLE EBS_ADMIN (
+    ADMIN_ID VARCHAR2(50) PRIMARY KEY,
+    USERNAME VARCHAR2(100) UNIQUE,
+    PASSWORD VARCHAR2(100)
+);
+```
+
+### **Explanation of Relational Mappings:**
+
+1. **One-to-One Relationship** between `Customer` and `Address`.
+   - One customer can have one address.
+
+2. **One-to-Many Relationship** between `Customer` and `Bill`.
+   - One customer can have many bills.
+
+3. **Many-to-One Relationship** between `Payment` and `Bill`.
+   - One bill can have multiple payments, but each payment is related to only one bill.
+
+### **Service Layer (Service and DAO)**
+
+In the service layer, the service classes (like `AdminServiceImpl`, `CustomerServiceImpl`) interact with these entities and handle business logic such as adding customers, generating bills, making payments, etc.
+
+### **Sample Input/Output:**
+
+- **Adding a Customer:**
+
+    POST `/admin/addCustomer`
+    
+    ```json
+    {
+      "customerId": "CUST001",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "9876543210",
+      "password": "pass123",
+      "addressId": "ADDR001",
+      "houseNumber": "101",
+      "streetName": "Main St",
+      "areaName": "Greenwood",
+      "city": "New York",
+      "state": "NY",
+      "pincode": "10001"
+    }
+    ```
+
+- **Generating a Bill:**
+
+    POST `/admin/generateBill`
+    
+    ```json
+    {
+      "billId": "BILL001",
+      "billMonth": "July",
+      "electricityUsed": 350,
+      "amount": 750.00,
+      "status": "Pending",
+      "customerId": "CUST001"
+    }
+    ```
+
+- **Making a Payment:**
+
+    POST `/customer/makePayment`
+    
+    ```json
+    {
+      "paymentId": "PAY001",
+      "amountPaid": 750.00,
+      "paymentMode": "Credit Card",
+      "paymentType": "Visa",
+      "billId": "BILL001"
+    }
+    ```
+
+This complete project structure, including entities and Oracle DB tables, will allow the integration of detailed customer information, payments, and billing operations in a real-world electricity billing system. Let me know if you need further customizations!

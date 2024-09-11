@@ -484,3 +484,462 @@ This Spring Boot project handles both admin and customer flows with a well-struc
 - The system uses Oracle as the database and integrates various entities and relationships to make the system professional and scalable.
 
 Let me know if you need further customization or explanation!
+
+
+
+
+
+
+
+
+Let's enhance the project by adding an Address entity to the system and improving the payment functionality to include the payment method (e.g., credit card, debit card, etc.). Additionally, we’ll rename the database tables to follow the format EBS_Table_Name.
+
+1. Database Schema (Oracle)
+sql
+Copy code
+-- EBS_CUSTOMERS Table
+CREATE TABLE EBS_CUSTOMERS (
+    CUSTOMER_ID VARCHAR2(20) PRIMARY KEY,
+    NAME VARCHAR2(100),
+    EMAIL VARCHAR2(100),
+    PHONE VARCHAR2(15),
+    PASSWORD VARCHAR2(100),
+    ADDRESS_ID VARCHAR2(20),
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ADDRESS_ID) REFERENCES EBS_ADDRESS(ADDRESS_ID)
+);
+
+-- EBS_ADDRESS Table
+CREATE TABLE EBS_ADDRESS (
+    ADDRESS_ID VARCHAR2(20) PRIMARY KEY,
+    HOUSE_NUMBER VARCHAR2(10),
+    STREET_NAME VARCHAR2(100),
+    AREA_NAME VARCHAR2(100),
+    CITY VARCHAR2(50),
+    STATE VARCHAR2(50),
+    PINCODE VARCHAR2(10)
+);
+
+-- EBS_BILLS Table
+CREATE TABLE EBS_BILLS (
+    BILL_ID VARCHAR2(20) PRIMARY KEY,
+    BILL_MONTH VARCHAR2(20),
+    ELECTRICITY_USED NUMBER,
+    AMOUNT NUMBER(10, 2),
+    STATUS VARCHAR2(20),
+    CUSTOMER_ID VARCHAR2(20),
+    FOREIGN KEY (CUSTOMER_ID) REFERENCES EBS_CUSTOMERS(CUSTOMER_ID)
+);
+
+-- EBS_PAYMENTS Table
+CREATE TABLE EBS_PAYMENTS (
+    PAYMENT_ID VARCHAR2(20) PRIMARY KEY,
+    PAYMENT_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    AMOUNT_PAID NUMBER(10, 2),
+    PAYMENT_MODE VARCHAR2(20),
+    PAYMENT_TYPE VARCHAR2(20), -- New field for payment method
+    BILL_ID VARCHAR2(20),
+    FOREIGN KEY (BILL_ID) REFERENCES EBS_BILLS(BILL_ID)
+);
+
+-- EBS_ADMINS Table
+CREATE TABLE EBS_ADMINS (
+    ADMIN_ID VARCHAR2(20) PRIMARY KEY,
+    USERNAME VARCHAR2(100),
+    PASSWORD VARCHAR2(100)
+);
+2. Entities (POJO Layer)
+2.1. Address.java
+java
+Copy code
+@Entity
+@Table(name = "EBS_ADDRESS")
+public class Address {
+    @Id
+    private String addressId;
+
+    private String houseNumber;
+    private String streetName;
+    private String areaName;
+    private String city;
+    private String state;
+    private String pincode;
+
+    // Getters and Setters
+}
+2.2. Customer.java (Updated with Address)
+java
+Copy code
+@Entity
+@Table(name = "EBS_CUSTOMERS")
+public class Customer {
+    @Id
+    private String customerId;
+
+    private String name;
+    private String email;
+    private String phone;
+    private String password;
+
+    @ManyToOne
+    @JoinColumn(name = "ADDRESS_ID")
+    private Address address;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    // Getters and Setters
+}
+2.3. Payment.java (Updated with Payment Method)
+java
+Copy code
+@Entity
+@Table(name = "EBS_PAYMENTS")
+public class Payment {
+    @Id
+    private String paymentId;
+
+    private double amountPaid;
+    private String paymentMode;  // E.g., Cash, Credit Card, Debit Card
+    private String paymentType;  // New field for type of payment (e.g., Visa, Mastercard)
+
+    @CreationTimestamp
+    private LocalDateTime paymentDate;
+
+    @ManyToOne
+    @JoinColumn(name = "BILL_ID")
+    private Bill bill;
+
+    // Getters and Setters
+}
+3. DAO Layer (Repositories)
+3.1. AddressRepository.java
+java
+Copy code
+@Repository
+public interface AddressRepository extends JpaRepository<Address, String> {
+}
+3.2. CustomerRepository.java (No changes, already in place)
+3.3. BillRepository.java (No changes)
+3.4. PaymentRepository.java (No changes)
+4. Service Layer
+4.1. AdminService.java (Updated with address functionality)
+java
+Copy code
+@Service
+public interface AdminService {
+    Admin login(String username, String password);
+    void addCustomer(Customer customer, Address address);
+    void editCustomer(Customer customer, Address address);
+    void deleteCustomer(String customerId);
+    Bill generateBill(Bill bill);
+    List<Payment> viewCustomerPayments(String customerId);
+    List<Bill> viewPendingPayments(String customerId);
+}
+4.2. AdminServiceImpl.java (Updated)
+java
+Copy code
+@Service
+public class AdminServiceImpl implements AdminService {
+
+    @Autowired
+    private AdminRepository adminRepo;
+
+    @Autowired
+    private CustomerRepository customerRepo;
+
+    @Autowired
+    private AddressRepository addressRepo;
+
+    @Autowired
+    private BillRepository billRepo;
+
+    @Autowired
+    private PaymentRepository paymentRepo;
+
+    @Override
+    public Admin login(String username, String password) {
+        return adminRepo.findByUsernameAndPassword(username, password)
+                .orElseThrow(() -> new RuntimeException("Invalid admin credentials"));
+    }
+
+    @Override
+    public void addCustomer(Customer customer, Address address) {
+        addressRepo.save(address);
+        customer.setAddress(address);
+        customerRepo.save(customer);
+    }
+
+    @Override
+    public void editCustomer(Customer customer, Address address) {
+        addressRepo.save(address);
+        customer.setAddress(address);
+        customerRepo.save(customer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerRepo.deleteById(customerId);
+    }
+
+    @Override
+    public Bill generateBill(Bill bill) {
+        return billRepo.save(bill);
+    }
+
+    @Override
+    public List<Payment> viewCustomerPayments(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return paymentRepo.findByBillCustomer(customer);
+    }
+
+    @Override
+    public List<Bill> viewPendingPayments(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return billRepo.findByCustomerAndStatus(customer, "Pending");
+    }
+}
+4.3. CustomerService.java (No changes)
+4.4. CustomerServiceImpl.java (Updated with payment method)
+java
+Copy code
+@Service
+public class CustomerServiceImpl implements CustomerService {
+
+    @Autowired
+    private CustomerRepository customerRepo;
+
+    @Autowired
+    private BillRepository billRepo;
+
+    @Autowired
+    private PaymentRepository paymentRepo;
+
+    @Override
+    public Customer login(String email, String password) {
+        return customerRepo.findByEmailAndPassword(email, password)
+                .orElseThrow(() -> new RuntimeException("Invalid customer credentials"));
+    }
+
+    @Override
+    public Payment makePayment(Payment payment) {
+        Bill bill = billRepo.findById(payment.getBill().getBillId())
+                .orElseThrow(() -> new RuntimeException("Bill not found"));
+        payment.setBill(bill);
+        paymentRepo.save(payment);
+        bill.setStatus("Paid");
+        billRepo.save(bill);
+        return payment;
+    }
+
+    @Override
+    public List<Payment> viewPaymentHistory(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return paymentRepo.findByBillCustomer(customer);
+    }
+}
+5. Controller Layer
+5.1. AdminController.java (Updated for address functionality)
+java
+Copy code
+@RestController
+@RequestMapping("/admin")
+public class AdminController {
+
+    @Autowired
+    private AdminService adminService;
+
+    @PostMapping("/login")
+    public ResponseEntity<Admin> login(@RequestBody Map<String, String> credentials) {
+        Admin admin = adminService.login(credentials.get("username"), credentials.get("password"));
+        return ResponseEntity.ok(admin);
+    }
+
+    @PostMapping("/addCustomer")
+    public ResponseEntity<Customer> addCustomer(@RequestBody Map<String, Object> payload) {
+        Customer customer = new Customer();
+        customer.setCustomerId((String) payload.get("customerId"));
+        customer.setName((String) payload.get("name"));
+        customer.setEmail((String) payload.get("email"));
+        customer.setPhone((String) payload.get("phone"));
+        customer.setPassword((String) payload.get("password"));
+
+        Address address = new Address();
+        address.setAddressId((String) payload.get("addressId"));
+        address.setHouseNumber((String) payload.get("houseNumber"));
+        address.setStreetName((String) payload.get("streetName"));
+        address.setAreaName((String) payload.get("areaName"));
+        address.setCity((String) payload.get("city"));
+        address.setState((String) payload.get("state"));
+        address.setPincode((String) payload.get("pincode"));
+
+        adminService.addCustomer(customer, address);
+        return ResponseEntity.ok(customer);
+    }
+
+    @PutMapping("/editCustomer")
+    public ResponseEntity<Customer> editCustomer(@RequestBody Map<String, Object> payload) {
+        Customer customer = new Customer();
+        customer.setCustomerId((String) payload.get("customerId"));
+        customer.setName((String) payload.get("name"));
+        customer.setEmail((String) payload.get("email"));
+        customer.setPhone((String) payload.get("phone"));
+        customer.setPassword((String) payload.get("password"));
+
+        Address address = new Address();
+        address.setAddressId((String) payload.get
+
+
+
+
+
+
+You said:
+continue the code
+ChatGPT said:
+ChatGPT
+java
+Copy code
+        "addressId"));
+        address.setHouseNumber((String) payload.get("houseNumber"));
+        address.setStreetName((String) payload.get("streetName"));
+        address.setAreaName((String) payload.get("areaName"));
+        address.setCity((String) payload.get("city"));
+        address.setState((String) payload.get("state"));
+        address.setPincode((String) payload.get("pincode"));
+
+        adminService.editCustomer(customer, address);
+        return ResponseEntity.ok(customer);
+    }
+
+    @DeleteMapping("/deleteCustomer/{customerId}")
+    public ResponseEntity<String> deleteCustomer(@PathVariable String customerId) {
+        adminService.deleteCustomer(customerId);
+        return ResponseEntity.ok("Customer deleted successfully");
+    }
+
+    @PostMapping("/generateBill")
+    public ResponseEntity<Bill> generateBill(@RequestBody Bill bill) {
+        Bill generatedBill = adminService.generateBill(bill);
+        return ResponseEntity.ok(generatedBill);
+    }
+
+    @GetMapping("/viewPayments/{customerId}")
+    public ResponseEntity<List<Payment>> viewCustomerPayments(@PathVariable String customerId) {
+        List<Payment> payments = adminService.viewCustomerPayments(customerId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/viewPendingPayments/{customerId}")
+    public ResponseEntity<List<Bill>> viewPendingPayments(@PathVariable String customerId) {
+        List<Bill> pendingPayments = adminService.viewPendingPayments(customerId);
+        return ResponseEntity.ok(pendingPayments);
+    }
+}
+5.2. CustomerController.java (Updated with address and payment method)
+java
+Copy code
+@RestController
+@RequestMapping("/customer")
+public class CustomerController {
+
+    @Autowired
+    private CustomerService customerService;
+
+    @PostMapping("/login")
+    public ResponseEntity<Customer> login(@RequestBody Map<String, String> credentials) {
+        Customer customer = customerService.login(credentials.get("email"), credentials.get("password"));
+        return ResponseEntity.ok(customer);
+    }
+
+    @PostMapping("/makePayment")
+    public ResponseEntity<Payment> makePayment(@RequestBody Payment payment) {
+        Payment newPayment = customerService.makePayment(payment);
+        return ResponseEntity.ok(newPayment);
+    }
+
+    @GetMapping("/paymentHistory/{customerId}")
+    public ResponseEntity<List<Payment>> viewPaymentHistory(@PathVariable String customerId) {
+        List<Payment> paymentHistory = customerService.viewPaymentHistory(customerId);
+        return ResponseEntity.ok(paymentHistory);
+    }
+}
+6. Sample Input/Output for Enhanced Functionality
+Admin Flow:
+
+Login as admin:
+json
+Copy code
+{
+  "username": "admin1",
+  "password": "adminpass"
+}
+Add a customer with address:
+json
+Copy code
+{
+  "customerId": "CUST002",
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "phone": "9876543210",
+  "password": "password123",
+  "addressId": "ADDR001",
+  "houseNumber": "12B",
+  "streetName": "Baker Street",
+  "areaName": "Downtown",
+  "city": "New York",
+  "state": "NY",
+  "pincode": "10001"
+}
+Generate bill:
+json
+Copy code
+{
+  "billId": "BILL002",
+  "billMonth": "August",
+  "electricityUsed": 450,
+  "amount": 900.00,
+  "status": "Pending",
+  "customerId": "CUST002"
+}
+Customer Flow:
+
+Login as customer:
+json
+Copy code
+{
+  "email": "alice@example.com",
+  "password": "password123"
+}
+Make a payment:
+json
+Copy code
+{
+  "paymentId": "PAY002",
+  "amountPaid": 900.00,
+  "paymentMode": "Debit Card",
+  "paymentType": "Visa",
+  "billId": "BILL002"
+}
+View payment history:
+bash
+Copy code
+GET /customer/paymentHistory/CUST002
+Relational Mappings
+One-to-One Mapping between Customer and Address.
+One-to-Many Mapping between Customer and Bill.
+Many-to-One Mapping between Payment and Bill.
+This enhanced Spring Boot project now includes the detailed customer Address entity and a flexible Payment method functionality, ensuring a robust and professional design. The table names adhere to the required EBS_Table_Name format, and the project is fully compatible with Oracle DB.
+
+Let me know if you need any further modifications or explanations!
+
+
+
+
+
+
+
+

@@ -1,3 +1,364 @@
+Here’s an expanded Spring Boot project structure for your electricity billing system with proper layering (POJO, Controller, Service, and DAO) and database integration with Oracle. Each functionality is based on user roles: **Admin** and **Customer**, with separate login flows.
+
+### 1. **Database Schema** (Oracle)
+
+```sql
+-- Customers Table
+CREATE TABLE CUSTOMERS (
+    CUSTOMER_ID VARCHAR2(20) PRIMARY KEY,
+    NAME VARCHAR2(100),
+    EMAIL VARCHAR2(100),
+    PHONE VARCHAR2(15),
+    PASSWORD VARCHAR2(100),
+    ADDRESS VARCHAR2(255),
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bills Table
+CREATE TABLE BILLS (
+    BILL_ID VARCHAR2(20) PRIMARY KEY,
+    BILL_MONTH VARCHAR2(20),
+    ELECTRICITY_USED NUMBER,
+    AMOUNT NUMBER(10, 2),
+    STATUS VARCHAR2(20),
+    CUSTOMER_ID VARCHAR2(20),
+    FOREIGN KEY (CUSTOMER_ID) REFERENCES CUSTOMERS(CUSTOMER_ID)
+);
+
+-- Payments Table
+CREATE TABLE PAYMENTS (
+    PAYMENT_ID VARCHAR2(20) PRIMARY KEY,
+    PAYMENT_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    AMOUNT_PAID NUMBER(10, 2),
+    PAYMENT_MODE VARCHAR2(20),
+    BILL_ID VARCHAR2(20),
+    FOREIGN KEY (BILL_ID) REFERENCES BILLS(BILL_ID)
+);
+
+-- Admins Table
+CREATE TABLE ADMINS (
+    ADMIN_ID VARCHAR2(20) PRIMARY KEY,
+    USERNAME VARCHAR2(100),
+    PASSWORD VARCHAR2(100)
+);
+```
+
+---
+
+### 2. **Entities (POJO Layer)**
+
+#### 2.1. `Customer.java`
+```java
+@Entity
+@Table(name = "CUSTOMERS")
+public class Customer {
+    @Id
+    private String customerId;
+    
+    private String name;
+    private String email;
+    private String phone;
+    private String password;
+    private String address;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    // Getters and Setters
+}
+```
+
+#### 2.2. `Admin.java`
+```java
+@Entity
+@Table(name = "ADMINS")
+public class Admin {
+    @Id
+    private String adminId;
+    
+    private String username;
+    private String password;
+
+    // Getters and Setters
+}
+```
+
+#### 2.3. `Bill.java`
+```java
+@Entity
+@Table(name = "BILLS")
+public class Bill {
+    @Id
+    private String billId;
+    
+    private String billMonth;
+    private double electricityUsed;
+    private double amount;
+    private String status;
+
+    @ManyToOne
+    @JoinColumn(name = "CUSTOMER_ID")
+    private Customer customer;
+
+    // Getters and Setters
+}
+```
+
+#### 2.4. `Payment.java`
+```java
+@Entity
+@Table(name = "PAYMENTS")
+public class Payment {
+    @Id
+    private String paymentId;
+    
+    private double amountPaid;
+    private String paymentMode;
+
+    @CreationTimestamp
+    private LocalDateTime paymentDate;
+
+    @ManyToOne
+    @JoinColumn(name = "BILL_ID")
+    private Bill bill;
+
+    // Getters and Setters
+}
+```
+
+---
+
+### 3. **DAO Layer (Repositories)**
+
+#### 3.1. `CustomerRepository.java`
+```java
+@Repository
+public interface CustomerRepository extends JpaRepository<Customer, String> {
+    Optional<Customer> findByEmailAndPassword(String email, String password);
+}
+```
+
+#### 3.2. `AdminRepository.java`
+```java
+@Repository
+public interface AdminRepository extends JpaRepository<Admin, String> {
+    Optional<Admin> findByUsernameAndPassword(String username, String password);
+}
+```
+
+#### 3.3. `BillRepository.java`
+```java
+@Repository
+public interface BillRepository extends JpaRepository<Bill, String> {
+    List<Bill> findByCustomerAndStatus(Customer customer, String status);
+}
+```
+
+#### 3.4. `PaymentRepository.java`
+```java
+@Repository
+public interface PaymentRepository extends JpaRepository<Payment, String> {
+    List<Payment> findByBill(Bill bill);
+}
+```
+
+---
+
+### 4. **Service Layer**
+
+#### 4.1. `AdminService.java`
+```java
+@Service
+public interface AdminService {
+    Admin login(String username, String password);
+    void addCustomer(Customer customer);
+    void editCustomer(Customer customer);
+    void deleteCustomer(String customerId);
+    Bill generateBill(Bill bill);
+    List<Payment> viewCustomerPayments(String customerId);
+    List<Bill> viewPendingPayments(String customerId);
+}
+```
+
+#### 4.2. `AdminServiceImpl.java`
+```java
+@Service
+public class AdminServiceImpl implements AdminService {
+
+    @Autowired
+    private AdminRepository adminRepo;
+
+    @Autowired
+    private CustomerRepository customerRepo;
+
+    @Autowired
+    private BillRepository billRepo;
+
+    @Autowired
+    private PaymentRepository paymentRepo;
+
+    @Override
+    public Admin login(String username, String password) {
+        return adminRepo.findByUsernameAndPassword(username, password)
+                .orElseThrow(() -> new RuntimeException("Invalid admin credentials"));
+    }
+
+    @Override
+    public void addCustomer(Customer customer) {
+        customerRepo.save(customer);
+    }
+
+    @Override
+    public void editCustomer(Customer customer) {
+        customerRepo.save(customer);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        customerRepo.deleteById(customerId);
+    }
+
+    @Override
+    public Bill generateBill(Bill bill) {
+        return billRepo.save(bill);
+    }
+
+    @Override
+    public List<Payment> viewCustomerPayments(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return paymentRepo.findByBillCustomer(customer);
+    }
+
+    @Override
+    public List<Bill> viewPendingPayments(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return billRepo.findByCustomerAndStatus(customer, "Pending");
+    }
+}
+```
+
+#### 4.3. `CustomerService.java`
+```java
+@Service
+public interface CustomerService {
+    Customer login(String email, String password);
+    Payment makePayment(Payment payment);
+    List<Payment> viewPaymentHistory(String customerId);
+}
+```
+
+#### 4.4. `CustomerServiceImpl.java`
+```java
+@Service
+public class CustomerServiceImpl implements CustomerService {
+
+    @Autowired
+    private CustomerRepository customerRepo;
+
+    @Autowired
+    private BillRepository billRepo;
+
+    @Autowired
+    private PaymentRepository paymentRepo;
+
+    @Override
+    public Customer login(String email, String password) {
+        return customerRepo.findByEmailAndPassword(email, password)
+                .orElseThrow(() -> new RuntimeException("Invalid customer credentials"));
+    }
+
+    @Override
+    public Payment makePayment(Payment payment) {
+        Bill bill = billRepo.findById(payment.getBill().getBillId())
+                .orElseThrow(() -> new RuntimeException("Bill not found"));
+        payment.setBill(bill);
+        paymentRepo.save(payment);
+        bill.setStatus("Paid");
+        billRepo.save(bill);
+        return payment;
+    }
+
+    @Override
+    public List<Payment> viewPaymentHistory(String customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        return paymentRepo.findByBillCustomer(customer);
+    }
+}
+```
+
+---
+
+### 5. **Controllers Layer**
+
+#### 5.1. `AdminController.java`
+```java
+@RestController
+@RequestMapping("/admin")
+public class AdminController {
+
+    @Autowired
+    private AdminService adminService;
+
+    @PostMapping("/login")
+    public ResponseEntity<Admin> login(@RequestBody Map<String, String> credentials) {
+        Admin admin = adminService.login(credentials.get("username"), credentials.get("password"));
+        return ResponseEntity.ok(admin);
+    }
+
+    @PostMapping("/addCustomer")
+    public ResponseEntity<Customer> addCustomer(@RequestBody Customer customer) {
+        adminService.addCustomer(customer);
+        return ResponseEntity.ok(customer);
+    }
+
+    @PutMapping("/editCustomer")
+    public ResponseEntity<Customer> editCustomer(@RequestBody Customer customer) {
+        adminService.editCustomer(customer);
+        return ResponseEntity.ok(customer);
+    }
+
+    @DeleteMapping("/deleteCustomer/{customerId}")
+    public ResponseEntity<String> deleteCustomer(@PathVariable String customerId) {
+        adminService.deleteCustomer(customerId);
+        return ResponseEntity.ok("Customer deleted");
+    }
+
+    @PostMapping("/generateBill")
+    public ResponseEntity<Bill> generateBill(@RequestBody Bill bill) {
+        Bill generatedBill = adminService.generateBill(bill);
+        return ResponseEntity.ok(generatedBill);
+    }
+
+    @GetMapping("/viewPayments/{customerId}")
+    public ResponseEntity<List<Payment>> viewPayments(@PathVariable String customerId) {
+        List<Payment> payments = adminService.viewCustomerPayments(customerId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/viewPendingPayments/{customerId}")
+    public ResponseEntity<List<Bill>> viewPendingPayments(@PathVariable String customerId) {
+        List<Bill> pendingBills = adminService.viewPendingPayments(customerId);
+        return ResponseEntity.ok(pendingBills);
+    }
+}
+```
+
+#### 5.2. `CustomerController.java`
+```java
+@RestController
+@RequestMapping("/customer")
+public class CustomerController {
+
+    @Autowired
+    private CustomerService customerService;
+
+    @PostMapping("/login")
+    public ResponseEntity<Customer> login(@RequestBody Map<String, String> credentials) {
+        Customer customer = customerService.login(credentials.get("email"), credentials.get("password"));
+
 ```java
         return ResponseEntity.ok(customer);
     }

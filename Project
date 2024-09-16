@@ -1231,3 +1231,150 @@ In the service layer, the service classes (like `AdminServiceImpl`, `CustomerSer
     ```
 
 This complete project structure, including entities and Oracle DB tables, will allow the integration of detailed customer information, payments, and billing operations in a real-world electricity billing system. Let me know if you need further customizations!
+
+
+
+
+
+Certainly! Continuing from where we left off:
+
+### 7. **Exception Handling (`exception/`)**
+
+**CustomException.java**
+```java
+package com.example.ebs.exception;
+
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+```
+
+**GlobalExceptionHandler.java**
+```java
+package com.example.ebs.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<String> handleCustomException(CustomException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGlobalException(Exception ex) {
+        return new ResponseEntity<>("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+```
+
+### 8. **Configuration (`config/`)**
+
+**SecurityConfig.java**
+```java
+package com.example.ebs.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf().disable()
+            .authorizeRequests()
+                .antMatchers("/api/admin/**").hasRole("ADMIN")
+                .antMatchers("/api/customers/**").hasRole("USER")
+                .anyRequest().authenticated()
+            .and()
+            .formLogin()
+                .permitAll()
+            .and()
+            .httpBasic();
+    }
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/h2-console/**");
+    }
+}
+```
+
+### 9. **Spring Boot Application Entry Point**
+
+**EbsApplication.java**
+```java
+package com.example.ebs;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class EbsApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EbsApplication.class, args);
+    }
+}
+```
+
+### 10. **Additional Notes**
+
+1. **Primary Key Generation**
+   - Ensure that primary keys are unique strings of length 6. You can customize ID generation in your repository or service layer if necessary.
+   - For example, you can use a utility class to generate unique IDs:
+
+**IdGenerator.java**
+```java
+package com.example.ebs.util;
+
+import java.util.UUID;
+
+public class IdGenerator {
+    public static String generateId() {
+        return UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+    }
+}
+```
+
+**Usage in Services**
+```java
+public Customer addCustomer(Customer customer) {
+    customer.setId(IdGenerator.generateId());
+    return customerRepository.save(customer);
+}
+```
+
+2. **Testing**
+   - Implement unit tests for your service and controller layers to ensure functionality is working as expected. Use JUnit and Mockito for testing.
+
+3. **Frontend Integration**
+   - This code does not include frontend implementation. You can use Thymeleaf for server-side rendering or frameworks like React/Angular for a more dynamic user experience.
+
+4. **Database Configuration**
+   - Make sure the database configuration in `application.properties` matches your Oracle database setup.
+
+5. **Error Handling**
+   - Customize exception handling based on the specific needs of your application.
+
+This setup provides a comprehensive starting point for building an electricity billing system with Spring Boot. Make sure to adapt and extend the code according to your specific project requirements and use cases.

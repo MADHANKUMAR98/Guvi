@@ -1234,7 +1234,408 @@ This complete project structure, including entities and Oracle DB tables, will a
 
 
 
+To cover all the use cases for a robust electricity billing system in a Spring Boot application, here's the detailed code implementation. This includes the necessary entities, services, controllers, and configuration to support the functionality described.
 
+### 1. **`application.properties`**
+```properties
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:xe
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.security.user.name=admin
+spring.security.user.password=admin123
+```
+
+### 2. **Entities (`entity/`)**
+
+**Customer.java**
+```java
+package com.example.ebs.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+
+@Entity(name = "EBS_Customer")
+public class Customer implements Serializable {
+    @Id
+    private String id;
+
+    @NotNull
+    private String name;
+
+    @NotNull
+    private String email;
+
+    @OneToOne
+    private Address address;
+
+    // Getters and Setters
+}
+```
+
+**Address.java**
+```java
+package com.example.ebs.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import java.io.Serializable;
+
+@Entity(name = "EBS_Address")
+public class Address implements Serializable {
+    @Id
+    private String id;
+    
+    private String houseNumber;
+    private String streetName;
+    private String areaName;
+    private String city;
+    private String state;
+    private String pincode;
+
+    // Getters and Setters
+}
+```
+
+**Bill.java**
+```java
+package com.example.ebs.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import java.time.LocalDate;
+
+@Entity(name = "EBS_Bill")
+public class Bill {
+    @Id
+    private String id;
+
+    @ManyToOne
+    private Customer customer;
+
+    private LocalDate billDate;
+    private Double amount;
+    private Boolean isPaid;
+
+    // Getters and Setters
+}
+```
+
+### 3. **POJOs (`pojo/`)**
+
+**PaymentMethod.java**
+```java
+package com.example.ebs.pojo;
+
+public enum PaymentMethod {
+    CREDIT_CARD,
+    DEBIT_CARD,
+    UPI
+}
+```
+
+### 4. **DAO Layer (`dao/`)**
+
+**CustomerRepository.java**
+```java
+package com.example.ebs.dao;
+
+import com.example.ebs.entity.Customer;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, String> {
+}
+```
+
+**AddressRepository.java**
+```java
+package com.example.ebs.dao;
+
+import com.example.ebs.entity.Address;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AddressRepository extends JpaRepository<Address, String> {
+}
+```
+
+**BillRepository.java**
+```java
+package com.example.ebs.dao;
+
+import com.example.ebs.entity.Bill;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface BillRepository extends JpaRepository<Bill, String> {
+}
+```
+
+### 5. **Service Layer (`service/`)**
+
+**CustomerService.java**
+```java
+package com.example.ebs.service;
+
+import com.example.ebs.entity.Customer;
+import com.example.ebs.dao.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CustomerService {
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    public Customer addCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
+    public Customer updateCustomer(String id, Customer customer) {
+        if(customerRepository.existsById(id)) {
+            customer.setId(id);
+            return customerRepository.save(customer);
+        }
+        throw new RuntimeException("Customer not found");
+    }
+
+    public void deleteCustomer(String id) {
+        if(customerRepository.existsById(id)) {
+            customerRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Customer not found");
+        }
+    }
+
+    public Customer getCustomerById(String id) {
+        return customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+    }
+
+    // Additional methods for getting all customers, etc.
+}
+```
+
+**AddressService.java**
+```java
+package com.example.ebs.service;
+
+import com.example.ebs.entity.Address;
+import com.example.ebs.dao.AddressRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AddressService {
+    @Autowired
+    private AddressRepository addressRepository;
+
+    public Address addAddress(Address address) {
+        return addressRepository.save(address);
+    }
+
+    public Address updateAddress(String id, Address address) {
+        if(addressRepository.existsById(id)) {
+            address.setId(id);
+            return addressRepository.save(address);
+        }
+        throw new RuntimeException("Address not found");
+    }
+
+    public void deleteAddress(String id) {
+        if(addressRepository.existsById(id)) {
+            addressRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Address not found");
+        }
+    }
+
+    public Address getAddressById(String id) {
+        return addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Address not found"));
+    }
+
+    // Additional methods for getting all addresses, etc.
+}
+```
+
+**BillService.java**
+```java
+package com.example.ebs.service;
+
+import com.example.ebs.entity.Bill;
+import com.example.ebs.dao.BillRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BillService {
+    @Autowired
+    private BillRepository billRepository;
+
+    public Bill generateBill(Bill bill) {
+        return billRepository.save(bill);
+    }
+
+    public Bill updateBill(String id, Bill bill) {
+        if(billRepository.existsById(id)) {
+            bill.setId(id);
+            return billRepository.save(bill);
+        }
+        throw new RuntimeException("Bill not found");
+    }
+
+    public void deleteBill(String id) {
+        if(billRepository.existsById(id)) {
+            billRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Bill not found");
+        }
+    }
+
+    public Bill getBillById(String id) {
+        return billRepository.findById(id).orElseThrow(() -> new RuntimeException("Bill not found"));
+    }
+
+    // Additional methods for getting all bills, etc.
+}
+```
+
+### 6. **Controller Layer (`controller/`)**
+
+**CustomerController.java**
+```java
+package com.example.ebs.controller;
+
+import com.example.ebs.entity.Customer;
+import com.example.ebs.service.CustomerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+    @Autowired
+    private CustomerService customerService;
+
+    @PostMapping
+    public Customer addCustomer(@RequestBody Customer customer) {
+        return customerService.addCustomer(customer);
+    }
+
+    @PutMapping("/{id}")
+    public Customer updateCustomer(@PathVariable String id, @RequestBody Customer customer) {
+        return customerService.updateCustomer(id, customer);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteCustomer(@PathVariable String id) {
+        customerService.deleteCustomer(id);
+    }
+
+    @GetMapping("/{id}")
+    public Customer getCustomerById(@PathVariable String id) {
+        return customerService.getCustomerById(id);
+    }
+
+    // Additional endpoints for getting all customers, etc.
+}
+```
+
+**AddressController.java**
+```java
+package com.example.ebs.controller;
+
+import com.example.ebs.entity.Address;
+import com.example.ebs.service.AddressService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/addresses")
+public class AddressController {
+    @Autowired
+    private AddressService addressService;
+
+    @PostMapping
+    public Address addAddress(@RequestBody Address address) {
+        return addressService.addAddress(address);
+    }
+
+    @PutMapping("/{id}")
+    public Address updateAddress(@PathVariable String id, @RequestBody Address address) {
+        return addressService.updateAddress(id, address);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteAddress(@PathVariable String id) {
+        addressService.deleteAddress(id);
+    }
+
+    @GetMapping("/{id}")
+    public Address getAddressById(@PathVariable String id) {
+        return addressService.getAddressById(id);
+    }
+
+    // Additional endpoints for getting all addresses, etc.
+}
+```
+
+**BillController.java**
+```java
+package com.example.ebs.controller;
+
+import com.example.ebs.entity.Bill;
+import com.example.ebs.service.BillService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/bills")
+public class BillController {
+    @Autowired
+    private BillService billService;
+
+    @PostMapping
+    public Bill generateBill(@RequestBody Bill bill) {
+        return billService.generateBill(bill);
+    }
+
+    @PutMapping("/{id}")
+    public Bill updateBill(@PathVariable String id, @RequestBody Bill bill) {
+        return billService.updateBill(id, bill);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteBill(@PathVariable String id) {
+        billService.deleteBill(id);
+    }
+
+    @GetMapping("/{id}")
+    public Bill getBillById(@PathVariable String id) {
+        return billService.getBillById(id);
+    }
+
+    // Additional endpoints for getting all bills, etc.
+}
+```
+
+### 7. **Exception Handling (`exception/`)**
+
+**CustomException.java**
+```java
+package com.example.ebs.exception;
+
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+```
+
+**
 
 Certainly! Continuing from where we left off:
 

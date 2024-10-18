@@ -281,3 +281,95 @@ Once the application is running, you can access the Swagger UI at:
 http://localhost:8080/swagger-ui/
 ```
 This provides a visual interface for interacting with the API, making testing and understanding the endpoints straightforward.
+The `@ApiOperation` annotation issue typically arises when using the newer versions of Spring Boot with Springfox, as they may not be compatible with each other. Springfox has not been updated recently to align with the latest versions of Spring Boot. 
+
+To resolve this, we can use an alternative library like **Springdoc OpenAPI**, which is compatible with the latest versions of Spring Boot (3.x). Here's how to update the project to use Springdoc OpenAPI:
+
+### Step 1: Update `pom.xml`
+
+Add the following dependencies for Springdoc:
+
+```xml
+<dependencies>
+    <!-- Spring Boot and JPA dependencies remain as before -->
+    <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        <version>2.1.0</version>
+    </dependency>
+</dependencies>
+```
+
+### Step 2: Update the Controller
+
+Remove the `@ApiOperation` annotation and update the controller as shown below. You don’t need special annotations for documentation; Springdoc will automatically generate the API documentation based on your controller and model.
+
+```java
+package com.example.blocktradeproject.controller;
+
+import com.example.blocktradeproject.service.BlockTradeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.concurrent.ExecutionException;
+
+@RestController
+@RequestMapping("/api/block-trade")
+public class BlockTradeController {
+
+    @Autowired
+    private BlockTradeService blockTradeService;
+
+    @GetMapping("/ema")
+    public ResponseEntity<Double> getEMA(@RequestParam String symbol, @RequestParam String date) {
+        try {
+            LocalDate tradeDate = LocalDate.parse(date);
+            double ema = blockTradeService.getEMAAsync(symbol, tradeDate);
+            return ResponseEntity.ok(ema);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+}
+```
+
+### Step 3: Access the Swagger Documentation
+
+Once you start the application, Springdoc OpenAPI will automatically generate and provide the Swagger UI documentation at:
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+You’ll see a visual interface similar to the one provided by Springfox but compatible with Spring Boot 3.x.
+
+### Step 4: Additional Configuration (Optional)
+
+If you want to customize your API documentation further, you can add a configuration class:
+
+```java
+package com.example.blocktradeproject.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.models.GroupedOpenApi;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("block-trade-api")
+                .pathsToMatch("/api/block-trade/**")
+                .build();
+    }
+}
+```
+
+This configuration helps to organize and group your APIs in the documentation.
+
+With these updates, your project will be using the latest compatible API documentation solution, ensuring that your endpoints are properly documented without the compatibility issues of Springfox.

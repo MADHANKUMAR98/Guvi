@@ -379,3 +379,290 @@ With these updates, your project will be using the latest compatible API documen
     <version>5.0.0</version> <!-- Compatible with Spring Boot 3.x -->
     <scope>provided</scope>
 </dependency>
+
+
+
+
+
+
+
+
+To create a full project that calculates the Exponential Moving Average (EMA) using multi-threading for efficiency and also provides a Swagger API for accessing the EMA values, you'll need to implement a comprehensive Spring Boot application. Below is an explanation of the architecture and complete code:
+
+### Project Structure
+1. **Entity Layer**: Defines the `BlockTradeData` entity representing each trade record.
+2. **Repository Layer**: JPA repository for database operations.
+3. **Service Layer**: Handles the business logic for calculating EMA and uses multi-threading.
+4. **Controller Layer**: Exposes REST endpoints for inputting symbol and date.
+5. **Swagger Configuration**: Configures Swagger for API documentation and testing.
+6. **Database Schema**: SQL script to create the necessary database table.
+
+### Database Schema
+Here's the SQL to create the table:
+
+```sql
+CREATE TABLE BLOCK_TRADE_DATA_ANALYSIS (
+    trade_date DATE,
+    symbol VARCHAR2(50) NOT NULL,
+    trade_price NUMBER(10, 2) NOT NULL,
+    previous_ema NUMBER(10, 2),
+    PRIMARY KEY (symbol, trade_date)
+);
+```
+
+### `pom.xml`
+Add the required dependencies in the `pom.xml`:
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>block-trade-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.3</version>
+    </parent>
+
+    <dependencies>
+        <!-- Spring Boot dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>19.8.0.0</version>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+</project>
+```
+
+### Entity Class (`BlockTradeData.java`)
+```java
+package com.example.blocktrade.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table(name = "BLOCK_TRADE_DATA_ANALYSIS")
+@IdClass(BlockTradeDataId.class)
+public class BlockTradeData implements Serializable {
+
+    @Id
+    private Date tradeDate;
+
+    @Id
+    private String symbol;
+
+    private double tradePrice;
+    private Double previousEma;
+
+    // Getters and setters
+}
+```
+
+### Composite Key (`BlockTradeDataId.java`)
+```java
+package com.example.blocktrade.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.Objects;
+
+public class BlockTradeDataId implements Serializable {
+
+    private Date tradeDate;
+    private String symbol;
+
+    // Constructors, equals, and hashCode
+}
+```
+
+### Repository Interface (`BlockTradeDataRepository.java`)
+```java
+package com.example.blocktrade.repository;
+
+import com.example.blocktrade.entity.BlockTradeData;
+import com.example.blocktrade.entity.BlockTradeDataId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Date;
+import java.util.List;
+
+@Repository
+public interface BlockTradeDataRepository extends JpaRepository<BlockTradeData, BlockTradeDataId> {
+    List<BlockTradeData> findBySymbolAndTradeDateBetween(String symbol, Date startDate, Date endDate);
+}
+```
+
+### Service Class (`BlockTradeService.java`)
+```java
+package com.example.blocktrade.service;
+
+import com.example.blocktrade.entity.BlockTradeData;
+import com.example.blocktrade.repository.BlockTradeDataRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Service;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+
+@Service
+public class BlockTradeService {
+
+    @Autowired
+    private BlockTradeDataRepository repository;
+
+    @Autowired
+    private Executor taskExecutor;
+
+    public double calculateEMA(String symbol, Date date) throws ExecutionException, InterruptedException {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_MONTH, -30);
+        Date startDate = cal.getTime();
+
+        CompletableFuture<List<BlockTradeData>> future = CompletableFuture.supplyAsync(
+            () -> repository.findBySymbolAndTradeDateBetween(symbol, startDate, date), taskExecutor
+        );
+
+        List<BlockTradeData> trades = future.get();
+        return calculateEMA(trades);
+    }
+
+    private double calculateEMA(List<BlockTradeData> trades) {
+        if (trades.isEmpty()) return 0;
+
+        double multiplier = 2.0 / (trades.size() + 1);
+        double ema = trades.get(0).getTradePrice();
+
+        for (BlockTradeData trade : trades.subList(1, trades.size())) {
+            ema = ((trade.getTradePrice() - ema) * multiplier) + ema;
+        }
+
+        return ema;
+    }
+}
+```
+
+### Controller Class (`BlockTradeController.java`)
+```java
+package com.example.blocktrade.controller;
+
+import com.example.blocktrade.service.BlockTradeService;
+import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
+
+@RestController
+public class BlockTradeController {
+
+    @Autowired
+    private BlockTradeService service;
+
+    @Operation(summary = "Get EMA for a symbol and date")
+    @GetMapping("/api/ema")
+    public double getEMA(@RequestParam String symbol, 
+                         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) throws ExecutionException, InterruptedException {
+        return service.calculateEMA(symbol, date);
+    }
+}
+```
+
+### Swagger Configuration (`OpenApiConfig.java`)
+```java
+package com.example.blocktrade.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI().info(new Info().title("Block Trade API").version("1.0").description("API for block trade analysis"));
+    }
+}
+```
+
+### Application Class (`BlockTradeProjectApplication.java`)
+```java
+package com.example.blocktrade;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@SpringBootApplication
+@EnableAsync
+public class BlockTradeProjectApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BlockTradeProjectApplication.class, args);
+    }
+}
+```
+
+### Thread Pool Configuration (`AsyncConfig.java`)
+```java
+package com.example.blocktrade.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import java.util.concurrent.Executor;
+
+@Configuration
+public class AsyncConfig {
+
+    @Bean
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("EMA-");
+        executor.initialize();
+        return executor;
+    }
+}
+```
+
+### Explanation and Flow
+1. **Input**: Symbol and trade date are passed through a GET request to `/api/ema`.
+2. **Service**: The service fetches trade data for the previous 30 days and calculates the EMA using a separate thread for efficiency.
+3. **Multithreading**: The `ThreadPoolTaskExecutor` is used to manage threads efficiently.
+4. **Swagger**: Accessible at `/swagger-ui/index.html` for API documentation and testing.
+
+This setup ensures efficiency through multi-threading and provides an easy-to-use API with Swagger support.

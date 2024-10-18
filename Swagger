@@ -1,0 +1,283 @@
+Below is the complete code for the Spring Boot project with EMA calculation and Swagger implementation for API documentation.
+
+### 1. `pom.xml`
+
+Make sure you include the necessary dependencies for Spring Boot, JPA, Oracle, and Swagger.
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>Block_Trade_Project</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.3</version>
+    </parent>
+
+    <dependencies>
+        <!-- Spring Boot dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Swagger dependencies -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+### 2. `BlockTradeData.java` (Entity Class)
+
+```java
+package com.example.blocktradeproject.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "BLOCK_TRADE_DATA_ANALYSIS")
+@IdClass(BlockTradeId.class)
+public class BlockTradeData {
+
+    @Id
+    @Column(name = "TRADE_DATE")
+    private LocalDate tradeDate;
+
+    @Id
+    @Column(name = "SYMBOL")
+    private String symbol;
+
+    @Column(name = "TRADE_PRICE")
+    private double tradePrice;
+
+    @Column(name = "PREVIOUS_EMA")
+    private double previousEma;
+
+    // Getters and setters
+    // ...
+}
+```
+
+### 3. `BlockTradeId.java` (Composite Key Class)
+
+```java
+package com.example.blocktradeproject.model;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
+
+public class BlockTradeId implements Serializable {
+
+    private LocalDate tradeDate;
+    private String symbol;
+
+    // Default constructor, getters, setters, equals, and hashCode
+    // ...
+}
+```
+
+### 4. `BlockTradeRepository.java` (Repository Interface)
+
+```java
+package com.example.blocktradeproject.repository;
+
+import com.example.blocktradeproject.model.BlockTradeData;
+import com.example.blocktradeproject.model.BlockTradeId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface BlockTradeRepository extends JpaRepository<BlockTradeData, BlockTradeId> {
+
+    @Query("SELECT b FROM BlockTradeData b WHERE b.symbol = :symbol AND b.tradeDate BETWEEN :startDate AND :endDate ORDER BY b.tradeDate")
+    List<BlockTradeData> findTradesForSymbolInDateRange(@Param("symbol") String symbol,
+                                                        @Param("startDate") LocalDate startDate,
+                                                        @Param("endDate") LocalDate endDate);
+}
+```
+
+### 5. `BlockTradeService.java` (Service Layer)
+
+```java
+package com.example.blocktradeproject.service;
+
+import com.example.blocktradeproject.model.BlockTradeData;
+import com.example.blocktradeproject.repository.BlockTradeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PreDestroy;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.*;
+
+@Service
+public class BlockTradeService {
+
+    @Autowired
+    private BlockTradeRepository blockTradeRepository;
+
+    private ExecutorService executor = Executors.newFixedThreadPool(10);
+
+    public double calculateEMA(String symbol, LocalDate date) throws Exception {
+        LocalDate startDate = date.minusDays(30);
+        List<BlockTradeData> trades = blockTradeRepository.findTradesForSymbolInDateRange(symbol, startDate, date);
+
+        if (trades.isEmpty()) {
+            throw new Exception("No trade data found for symbol " + symbol);
+        }
+
+        double ema = trades.get(0).getPreviousEma();
+        double multiplier = 2.0 / (trades.size() + 1);
+
+        for (BlockTradeData trade : trades) {
+            ema = ((trade.getTradePrice() - ema) * multiplier) + ema;
+        }
+
+        return ema;
+    }
+
+    public double getEMAAsync(String symbol, LocalDate date) throws ExecutionException, InterruptedException {
+        Callable<Double> task = () -> calculateEMA(symbol, date);
+        Future<Double> future = executor.submit(task);
+        return future.get();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdown();
+    }
+}
+```
+
+### 6. `BlockTradeController.java` (Controller)
+
+```java
+package com.example.blocktradeproject.controller;
+
+import com.example.blocktradeproject.service.BlockTradeService;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.concurrent.ExecutionException;
+
+@RestController
+@RequestMapping("/api/block-trade")
+public class BlockTradeController {
+
+    @Autowired
+    private BlockTradeService blockTradeService;
+
+    @ApiOperation(value = "Get the EMA for a symbol and date")
+    @GetMapping("/ema")
+    public ResponseEntity<Double> getEMA(@RequestParam String symbol, @RequestParam String date) {
+        try {
+            LocalDate tradeDate = LocalDate.parse(date);
+            double ema = blockTradeService.getEMAAsync(symbol, tradeDate);
+            return ResponseEntity.ok(ema);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+}
+```
+
+### 7. `SwaggerConfig.java` (Swagger Configuration)
+
+```java
+package com.example.blocktradeproject.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.example.blocktradeproject"))
+                .build();
+    }
+}
+```
+
+### 8. `application.properties`
+
+```properties
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:xe
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.Oracle12cDialect
+server.port=8080
+```
+
+### Sample Flow Process
+
+**API Endpoint**:
+- URL: `http://localhost:8080/api/block-trade/ema?symbol=AAPL&date=2024-09-06`
+- Method: `GET`
+
+**Sample Input**:
+- Symbol: `AAPL`
+- Date: `2024-09-06`
+
+**Output**:
+- JSON Response: 
+```json
+{
+    "averageEMA": 156.0
+}
+```
+
+### Accessing Swagger Documentation
+
+Once the application is running, you can access the Swagger UI at:
+```
+http://localhost:8080/swagger-ui/
+```
+This provides a visual interface for interacting with the API, making testing and understanding the endpoints straightforward.

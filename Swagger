@@ -373,3 +373,9 @@ public class OpenApiConfig {
 This configuration helps to organize and group your APIs in the documentation.
 
 With these updates, your project will be using the latest compatible API documentation solution, ensuring that your endpoints are properly documented without the compatibility issues of Springfox.
+<dependency>
+    <groupId>jakarta.servlet</groupId>
+    <artifactId>jakarta.servlet-api</artifactId>
+    <version>5.0.0</version> <!-- Compatible with Spring Boot 3.x -->
+    <scope>provided</scope>
+</dependency>

@@ -1,28 +1,257 @@
-<?xml version="1.0" encoding="UTF-8"?>
+Sure! Below is a complete example of a Spring Boot application that implements multithreading to calculate the Exponential Moving Average (EMA) for stock trades using a multi-threaded approach.
+
+### Complete Project Code
+
+#### 1. Project Structure
+
+```plaintext
+BlockTradeProject
+|-- src
+|   |-- main
+|   |   |-- java
+|   |   |   |-- com
+|   |   |   |   |-- example
+|   |   |   |   |   |-- Block_Trade_Project
+|   |   |   |   |   |   |-- BlockTradeProjectApplication.java
+|   |   |   |   |   |   |-- controller
+|   |   |   |   |   |   |   |-- TradeController.java
+|   |   |   |   |   |   |-- model
+|   |   |   |   |   |   |   |-- BlockTradeData.java
+|   |   |   |   |   |   |-- repository
+|   |   |   |   |   |   |   |-- TradeRepository.java
+|   |   |   |   |   |   |-- service
+|   |   |   |   |   |   |   |-- TradeService.java
+|   |   |   |   |   |   |   |-- EMATask.java
+|   |   |   |   |   |   |-- config
+|   |   |   |   |   |   |   |-- DatabaseConfig.java
+|   |   |-- resources
+|   |   |   |-- application.properties
+|-- pom.xml
+```
+
+#### 2. Code Files
+
+**a. `BlockTradeProjectApplication.java`**
+
+```java
+package com.example.Block_Trade_Project;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BlockTradeProjectApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BlockTradeProjectApplication.class, args);
+    }
+}
+```
+
+**b. `TradeController.java`**
+
+```java
+package com.example.Block_Trade_Project.controller;
+
+import com.example.Block_Trade_Project.service.TradeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+@RestController
+@RequestMapping("/api/block-trade")
+public class TradeController {
+    @Autowired
+    private TradeService tradeService;
+
+    @GetMapping("/ema")
+    public ResponseEntity<Double> getEMAs(@RequestParam List<String> symbols, @RequestParam String date) {
+        LocalDate parsedDate = LocalDate.parse(date);
+        try {
+            Double averageEMA = tradeService.calculateEMAs(symbols, parsedDate);
+            return ResponseEntity.ok(averageEMA);
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+}
+```
+
+**c. `BlockTradeData.java` (Entity Class)**
+
+```java
+package com.example.Block_Trade_Project.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "BLOCK_TRADE_DATA_ANALYSIS")
+public class BlockTradeData {
+    @Id
+    @Column(name = "date")
+    private LocalDate date;
+
+    @Id
+    @Column(name = "symbol")
+    private String symbol;
+
+    @Column(name = "trade_price")
+    private double tradePrice;
+
+    @Column(name = "previous_ema")
+    private double previousEma;
+
+    // Getters and Setters
+}
+```
+
+**d. `TradeRepository.java`**
+
+```java
+package com.example.Block_Trade_Project.repository;
+
+import com.example.Block_Trade_Project.model.BlockTradeData;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface TradeRepository extends JpaRepository<BlockTradeData, LocalDate> {
+    List<BlockTradeData> findBySymbolAndDateBetween(String symbol, LocalDate startDate, LocalDate endDate);
+}
+```
+
+**e. `EMATask.java`**
+
+```java
+package com.example.Block_Trade_Project.service;
+
+import com.example.Block_Trade_Project.repository.TradeRepository;
+
+import java.time.LocalDate;
+import java.util.concurrent.Callable;
+
+public class EMATask implements Callable<Double> {
+    private final String symbol;
+    private final LocalDate date;
+    private final TradeRepository tradeRepository;
+
+    public EMATask(String symbol, LocalDate date, TradeRepository tradeRepository) {
+        this.symbol = symbol;
+        this.date = date;
+        this.tradeRepository = tradeRepository;
+    }
+
+    @Override
+    public Double call() {
+        return calculateEMA(symbol, date);
+    }
+
+    private Double calculateEMA(String symbol, LocalDate date) {
+        // Logic to calculate EMA based on trades from the last 30 days
+        LocalDate startDate = date.minusDays(30);
+        List<BlockTradeData> trades = tradeRepository.findBySymbolAndDateBetween(symbol, startDate, date);
+        
+        // Calculate EMA (dummy calculation for example)
+        double ema = 0.0;
+        if (!trades.isEmpty()) {
+            double multiplier = 2.0 / (trades.size() + 1);
+            ema = trades.get(0).getTradePrice(); // Initial value
+            for (BlockTradeData trade : trades) {
+                ema = (trade.getTradePrice() - ema) * multiplier + ema;
+            }
+        }
+        return ema;
+    }
+}
+```
+
+**f. `TradeService.java`**
+
+```java
+package com.example.Block_Trade_Project.service;
+
+import com.example.Block_Trade_Project.repository.TradeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+
+@Service
+public class TradeService {
+    @Autowired
+    private TradeRepository tradeRepository;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Adjust pool size as needed
+
+    public Double calculateEMAs(List<String> symbols, LocalDate date) throws InterruptedException, ExecutionException {
+        List<Future<Double>> futures = new ArrayList<>();
+
+        for (String symbol : symbols) {
+            EMATask task = new EMATask(symbol, date, tradeRepository);
+            futures.add(executorService.submit(task));
+        }
+
+        double totalEMA = 0.0;
+        for (Future<Double> future : futures) {
+            totalEMA += future.get(); // This will block until the calculation is done
+        }
+
+        return totalEMA / symbols.size(); // Average of all EMAs, if needed
+    }
+
+    public void shutdown() {
+        executorService.shutdown();
+    }
+
+    @PreDestroy
+    public void onDestroy() {
+        shutdown();
+    }
+}
+```
+
+**g. `application.properties`**
+
+```properties
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+### 3. Build Configuration
+
+**`pom.xml`**
+
+Make sure to include the necessary dependencies in your `pom.xml`:
+
+```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>block-trade-project</artifactId>
-    <version>1.0.0</version>
+    <artifactId>Block_Trade_Project</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.3</version>
-    </parent>
 
     <properties>
         <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <spring.version>3.3.3</spring.version>
     </properties>
 
     <dependencies>
-        <!-- Spring Boot Starter Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -31,23 +260,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Oracle JDBC Driver -->
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc8</artifactId>
-            <scope>runtime</scope>
+            <version>19.8.0.0</version>
         </dependency>
-
-        <!-- Spring Boot DevTools (Optional for development) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- Spring Boot Test Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -61,6 +278,86 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
+```
+
+### 4. How to Run the Project
+
+1. **Set Up Your Oracle Database**: Make sure you have
+
+Sure! Here’s the continuation of the instructions on how to run the project along with sample input and output examples.
+
+### 4. How to Run the Project (Continued)
+
+1. **Set Up Your Oracle Database**:
+   - Ensure that your Oracle database is running and the `BLOCK_TRADE_DATA_ANALYSIS` table is created to hold the `BlockTradeData` entries.
+   - You should have the necessary credentials (username and password) and the connection URL configured in `application.properties`.
+
+2. **Insert Sample Data**:
+   - Populate your `BLOCK_TRADE_DATA_ANALYSIS` table with sample data to perform EMA calculations. You can use a SQL script to insert some data. Here’s an example:
+
+```sql
+INSERT INTO BLOCK_TRADE_DATA_ANALYSIS (date, symbol, trade_price, previous_ema) VALUES 
+('2024-09-01', 'AAPL', 150.0, 148.0),
+('2024-09-02', 'AAPL', 152.0, 150.0),
+('2024-09-03', 'AAPL', 154.0, 151.0),
+('2024-09-04', 'AAPL', 155.0, 153.0),
+('2024-09-05', 'AAPL', 157.0, 154.0),
+('2024-09-06', 'AAPL', 158.0, 155.0);
+```
+
+3. **Run the Application**:
+   - Open a terminal in the root directory of your project (where the `pom.xml` file is located).
+   - Use the following command to build and run the Spring Boot application:
+
+```bash
+mvn clean spring-boot:run
+```
+
+4. **Access the API**:
+   - Once the application is running, you can use a tool like Postman or CURL to send HTTP GET requests to your API endpoint.
+
+### 5. Sample Input and Output
+
+**Sample Input**:
+- To calculate the EMA for the symbol "AAPL" on "2024-09-06", you can send the following GET request:
+
+```plaintext
+GET http://localhost:8080/api/block-trade/ema?symbols=AAPL&date=2024-09-06
+```
+
+**Sample Output**:
+- If the request is successful, the output might look like this:
+
+```json
+{
+    "averageEMA": 156.0
+}
+```
+
+### 6. Explanation of Multithreading Implementation
+
+- **Thread Pool**: We use a fixed thread pool (`ExecutorService`) to manage multiple threads efficiently. This allows concurrent processing of EMA calculations for different symbols.
+  
+- **Callable Interface**: The `EMATask` class implements `Callable<Double>`, which allows each task to return a value (the calculated EMA) and can throw checked exceptions.
+
+- **Future Interface**: The `Future<Double>` interface is used to retrieve the result of the asynchronous computation. The main thread waits for all tasks to complete and collects the results.
+
+- **Shutdown Hook**: The `shutdown()` method ensures that the thread pool is properly shut down when the application context is destroyed.
+
+### Conclusion
+
+With this setup, your Spring Boot application can handle multiple requests for EMA calculations in parallel, improving efficiency and responsiveness. You can extend this further by adding more features or improving error handling based on your project requirements.
+
+If you need any further assistance or modifications, feel free to ask!

@@ -361,3 +361,10 @@ GET http://localhost:8080/api/block-trade/ema?symbols=AAPL&date=2024-09-06
 With this setup, your Spring Boot application can handle multiple requests for EMA calculations in parallel, improving efficiency and responsiveness. You can extend this further by adding more features or improving error handling based on your project requirements.
 
 If you need any further assistance or modifications, feel free to ask!
+INSERT INTO BLOCK_TRADE_DATA_ANALYSIS (Trade_Date, Symbol, Trade_Price, Previous_ema) VALUES 
+('2024-09-01', 'AAPL', 150.0, 148.0),
+('2024-09-02', 'AAPL', 152.0, 150.0),
+('2024-09-03', 'AAPL', 154.0, 151.0),
+('2024-09-04', 'AAPL', 155.0, 153.0),
+('2024-09-05', 'AAPL', 157.0, 154.0),
+('2024-09-06', 'AAPL', 158.0, 155.0);

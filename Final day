@@ -1,0 +1,226 @@
+To implement a Spring Boot application that calculates the moving average (EMA) based on a given symbol and date while utilizing multithreading for efficiency and integrating Swagger for API documentation, follow the steps below. 
+
+### Project Structure
+
+1. **Model:** Create a model class for `BlockTradeData`.
+2. **Repository:** Create a JPA repository for database operations.
+3. **Service:** Implement the service layer with multithreading for EMA calculation.
+4. **Controller:** Create a REST controller to handle requests.
+5. **Swagger Configuration:** Set up Swagger for API documentation.
+
+### Step-by-Step Implementation
+
+#### 1. Add Dependencies to `pom.xml`
+
+Make sure to include the necessary dependencies in your `pom.xml` for Spring Boot, JPA, Swagger, and the Jakarta Servlet API:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-boot-starter</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>5.0.0</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>com.oracle.database.jdbc</groupId>
+        <artifactId>ojdbc8</artifactId>
+        <version>19.8.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+#### 2. Create the Model Class
+
+```java
+package com.example.blocktrade.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "block_trade_data_analysis")
+public class BlockTradeData {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "trade_date")
+    private LocalDate tradeDate;
+
+    @Column(name = "symbol", nullable = false)
+    private String symbol;
+
+    @Column(name = "trade_price", nullable = false)
+    private Double tradePrice;
+
+    @Column(name = "previous_ema")
+    private Double previousEma;
+
+    // Getters and Setters
+}
+```
+
+#### 3. Create the Repository Interface
+
+```java
+package com.example.blocktrade.repository;
+
+import com.example.blocktrade.model.BlockTradeData;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface BlockTradeDataRepository extends JpaRepository<BlockTradeData, Long> {
+    List<BlockTradeData> findBySymbolAndTradeDateBetween(String symbol, LocalDate startDate, LocalDate endDate);
+}
+```
+
+#### 4. Create the Service Class with Multithreading
+
+```java
+package com.example.blocktrade.service;
+
+import com.example.blocktrade.model.BlockTradeData;
+import com.example.blocktrade.repository.BlockTradeDataRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+@Service
+public class BlockTradeDataService {
+
+    @Autowired
+    private BlockTradeDataRepository repository;
+
+    public CompletableFuture<Double> calculateEMA(String symbol, LocalDate date) {
+        LocalDate startDate = date.minusDays(30);
+        List<BlockTradeData> trades = repository.findBySymbolAndTradeDateBetween(symbol, startDate, date);
+
+        return CompletableFuture.supplyAsync(() -> {
+            double ema = 0.0;
+            int period = trades.size(); // Assuming all trades are for the same symbol within the period
+            if (period > 0) {
+                double multiplier = 2.0 / (period + 1);
+                for (BlockTradeData trade : trades) {
+                    ema = (trade.getTradePrice() * multiplier) + (ema * (1 - multiplier));
+                }
+            }
+            return ema;
+        });
+    }
+}
+```
+
+#### 5. Create the Controller Class
+
+```java
+package com.example.blocktrade.controller;
+
+import com.example.blocktrade.service.BlockTradeDataService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
+
+@RestController
+@RequestMapping("/api/blocktrade")
+@Api(value = "Block Trade Data API")
+public class BlockTradeDataController {
+
+    @Autowired
+    private BlockTradeDataService service;
+
+    @GetMapping("/ema")
+    @ApiOperation(value = "Calculate EMA for a given symbol and date")
+    public CompletableFuture<Double> getEma(@RequestParam String symbol, @RequestParam String date) {
+        LocalDate tradeDate = LocalDate.parse(date);
+        return service.calculateEMA(symbol, tradeDate);
+    }
+}
+```
+
+#### 6. Swagger Configuration
+
+Make sure you have the Swagger configuration class:
+
+```java
+package com.example.blocktrade.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.example.blocktrade.controller"))
+                .paths(PathSelectors.any())
+                .build();
+    }
+}
+```
+
+### Sample Input and Flow Process
+
+1. **Input:** Call the endpoint with the required parameters:
+   - Example: `GET /api/blocktrade/ema?symbol=AAPL&date=2024-10-18`
+   
+2. **Process:**
+   - The request is handled by `BlockTradeDataController`.
+   - The controller calls the `calculateEMA` method from the service.
+   - The service retrieves the trades for the given symbol within the last 30 days using the repository.
+   - It calculates the EMA asynchronously using a separate thread.
+   - The computed EMA is returned as a response.
+
+3. **Output:** A response containing the calculated EMA value.
+
+### Sample Output
+
+Assuming the trades for AAPL over the last 30 days yield an EMA of 145.00:
+
+```json
+{
+  "ema": 145.00
+}
+```
+
+### Running the Application
+
+1. Run the Spring Boot application.
+2. Access Swagger UI at `http://localhost:8080/swagger-ui/` to view the API documentation.
+3. Test the endpoint by providing the symbol and date.
+
+### Conclusion
+
+This implementation uses multithreading to enhance performance while calculating the EMA over a period. It also integrates Swagger for API documentation, making the service easily testable and user-friendly. Adjust the EMA calculation logic as needed based on your specific requirements or any other metrics you might want to include.

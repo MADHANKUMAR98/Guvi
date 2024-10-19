@@ -292,3 +292,11 @@ This setup ensures that the application efficiently calculates the EMA value for
         </plugins>
     </build>
 </project>
+
+
+<dependency>
+    <groupId>jakarta.servlet</groupId>
+    <artifactId>jakarta.servlet-api</artifactId>
+    <version>5.0.0</version>
+    <scope>provided</scope>
+</dependency>

@@ -1,0 +1,294 @@
+To implement the project using Oracle Database, JDBC 11, and multithreading while making it efficient, here’s a step-by-step guide and the code:
+
+### 1. **Project Setup**
+
+Ensure your project structure follows the standard Spring Boot layout and includes:
+- `src/main/java` for your Java source code
+- `src/main/resources` for your application configuration (application.properties)
+- A `pom.xml` file with dependencies for Spring Boot, Oracle JDBC, and Swagger.
+
+### 2. **Database Schema (Oracle)**
+
+The schema contains the necessary columns:
+```sql
+CREATE TABLE BLOCK_TRADE_DATA_ANALYSIS (
+    TRADE_DATE DATE NOT NULL,
+    SYMBOL VARCHAR2(50) NOT NULL,
+    TRADE_PRICE NUMBER(10, 2) NOT NULL,
+    PREVIOUS_EMA NUMBER(10, 2),
+    PRIMARY KEY (TRADE_DATE, SYMBOL)
+);
+```
+
+### 3. **`application.properties` Configuration**
+
+Configure your Oracle database connection:
+```properties
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:orcl
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.Oracle12cDialect
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=none
+```
+
+### 4. **Entities and Repositories**
+
+**Entity: `BlockTradeDataAnalysis.java`**
+```java
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "BLOCK_TRADE_DATA_ANALYSIS")
+public class BlockTradeDataAnalysis {
+
+    @Id
+    @Column(name = "TRADE_DATE")
+    private LocalDate tradeDate;
+
+    @Id
+    @Column(name = "SYMBOL")
+    private String symbol;
+
+    @Column(name = "TRADE_PRICE")
+    private BigDecimal tradePrice;
+
+    @Column(name = "PREVIOUS_EMA")
+    private BigDecimal previousEma;
+
+    // Getters and Setters
+}
+```
+
+**Repository: `BlockTradeDataRepository.java`**
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface BlockTradeDataRepository extends JpaRepository<BlockTradeDataAnalysis, Long> {
+    List<BlockTradeDataAnalysis> findBySymbolAndTradeDateBetween(String symbol, LocalDate startDate, LocalDate endDate);
+}
+```
+
+### 5. **Service Layer with Multithreading**
+
+**Service: `BlockTradeDataService.java`**
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+
+@Service
+public class BlockTradeDataService {
+
+    @Autowired
+    private BlockTradeDataRepository repository;
+
+    public CompletableFuture<BigDecimal> calculateEma(String symbol, LocalDate tradeDate) {
+        return CompletableFuture.supplyAsync(() -> {
+            LocalDate startDate = tradeDate.minusDays(30);
+            List<BlockTradeDataAnalysis> trades = repository.findBySymbolAndTradeDateBetween(symbol, startDate, tradeDate);
+            if (trades.isEmpty()) {
+                throw new RuntimeException("No data found for symbol " + symbol + " in the last 30 days.");
+            }
+            return computeEma(trades);
+        }, Executors.newFixedThreadPool(4)); // Using a thread pool for efficiency
+    }
+
+    private BigDecimal computeEma(List<BlockTradeDataAnalysis> trades) {
+        double smoothing = 2.0 / (trades.size() + 1);
+        BigDecimal ema = trades.get(0).getTradePrice(); // Start with the first trade price
+        for (BlockTradeDataAnalysis trade : trades) {
+            ema = (trade.getTradePrice().subtract(ema)).multiply(BigDecimal.valueOf(smoothing)).add(ema);
+        }
+        return ema;
+    }
+}
+```
+
+### 6. **Controller Layer**
+
+**Controller: `BlockTradeDataController.java`**
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
+
+@RestController
+@RequestMapping("/api/blocktrade")
+@Api(value = "Block Trade Data Analysis", tags = {"Block Trade"})
+public class BlockTradeDataController {
+
+    @Autowired
+    private BlockTradeDataService service;
+
+    @GetMapping("/ema")
+    @ApiOperation(value = "Calculate EMA for a symbol based on the last 30 days")
+    public CompletableFuture<BigDecimal> getEma(@RequestParam String symbol, @RequestParam String date) {
+        LocalDate tradeDate = LocalDate.parse(date);
+        return service.calculateEma(symbol, tradeDate);
+    }
+}
+```
+
+### 7. **Swagger Configuration**
+
+Add Swagger for API documentation.
+
+**Configuration: `SwaggerConfig.java`**
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+@Configuration
+@EnableSwagger2
+public class SwaggerConfig {
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.example"))
+                .paths(PathSelectors.any())
+                .build();
+    }
+}
+```
+
+### 8. **Sample Input and Output**
+
+- **Input:** 
+  - Symbol: `AAPL`
+  - Date: `2024-10-18`
+
+- **Output:** 
+  - The application will fetch the trades for the symbol `AAPL` over the last 30 days and calculate the EMA value using multithreading for efficiency. The output will be displayed as a JSON response.
+
+### 9. **Running the Application**
+
+Start your Spring Boot application using the following Maven command:
+```bash
+mvn spring-boot:run
+```
+
+### Explanation
+
+- **Multithreading:** The service uses `CompletableFuture` with a thread pool to handle multiple EMA calculations concurrently, making it efficient for processing large datasets.
+- **EMA Calculation:** The EMA is computed using the formula with a smoothing factor derived from the number of days considered (30 in this case).
+- **Swagger Integration:** Provides a user-friendly interface for testing and exploring the API endpoints.
+
+This setup ensures that the application efficiently calculates the EMA value for given symbols using multithreading and a RESTful API, with the added benefit of Swagger documentation.
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>Block_Trade_Project</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <spring.boot.version>3.3.3</spring.boot.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Starter Dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Oracle Database Driver -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>21.3.0.0</version>
+        </dependency>
+
+        <!-- Spring Boot Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Swagger Integration -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <!-- Hibernate Validator -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        
+        <!-- Lombok for simplified code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- Spring Boot DevTools for hot reloads -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+            </plugin>
+
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

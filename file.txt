@@ -1,1 +1,6 @@
+<<<<<<< HEAD
 Change B
+=======
+Change A
+Change A
+>>>>>>> feature-branch

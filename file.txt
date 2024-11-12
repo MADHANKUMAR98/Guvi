@@ -3,4 +3,7 @@ Change B
 =======
 Change A
 Change A
+<<<<<<< HEAD
 >>>>>>> feature-branch
+=======
+>>>>>>> 98df1ab (Feature branch changes)

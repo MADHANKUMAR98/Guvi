@@ -1,0 +1,104 @@
+// Function to delete a player by ID
+function deletePlayer(id) {
+    // Retrieve players from localStorage
+    let allPlayersString = localStorage.getItem("allplayers");
+    if (allPlayersString) {
+        let allPlayers = JSON.parse(allPlayersString);
+
+        // Find the player index and remove it
+        let index = allPlayers.findIndex(player => player.id === id);
+        if (index !== -1) {
+            allPlayers.splice(index, 1);
+            localStorage.setItem("allplayers", JSON.stringify(allPlayers));
+            loadData(); // Refresh the table
+        } else {
+            console.log("Player not found");
+        }
+    } else {
+        console.log("No players found in storage");
+    }
+}
+
+// Function to view player details
+function viewPlayer(id) {
+    // Retrieve players from localStorage
+    let allPlayersString = localStorage.getItem("allplayers");
+    if (allPlayersString) {
+        let allPlayers = JSON.parse(allPlayersString);
+
+        // Find the player
+        let player = allPlayers.find(player => player.id === id);
+        if (player) {
+            alert(`Player Details:\n\n` +
+                  `Name: ${player.playerName}\n` +
+                  `Image URL: ${player.playerImageUrl}\n` +
+                  `Position: ${player.playerPosition}\n` +
+                  `Cost: ${player.playerCost}`);
+        } else {
+            console.log("Player not found");
+        }
+    } else {
+        console.log("No players found in storage");
+    }
+}
+
+// Function to edit player details
+function editPlayer(id) {
+    // Retrieve players from localStorage
+    let allPlayersString = localStorage.getItem("allplayers");
+    if (allPlayersString) {
+        let allPlayers = JSON.parse(allPlayersString);
+
+        // Find the player
+        let player = allPlayers.find(player => player.id === id);
+        if (player) {
+            // Prompt user for new values
+            let newName = prompt("Enter new name", player.playerName);
+            let newImageUrl = prompt("Enter new image URL", player.playerImageUrl);
+            let newPosition = prompt("Enter new position", player.playerPosition);
+            let newCost = prompt("Enter new cost", player.playerCost);
+
+            // Update player details
+            if (newName) player.playerName = newName;
+            if (newImageUrl) player.playerImageUrl = newImageUrl;
+            if (newPosition) player.playerPosition = newPosition;
+            if (newCost) player.playerCost = newCost;
+
+            localStorage.setItem("allplayers", JSON.stringify(allPlayers));
+            loadData(); // Refresh the table
+        } else {
+            console.log("Player not found");
+        }
+    } else {
+        console.log("No players found in storage");
+    }
+}
+
+// Ensure the `loadData` function is fixed to display the table properly
+function loadData() {
+    let allPlayersString = localStorage.getItem("allplayers");
+    if (allPlayersString) {
+        let allPlayers = JSON.parse(allPlayersString);
+        let content = "";
+        
+        for (let eachPlayer of allPlayers) {
+            content += `
+                <tr>
+                    <td>${eachPlayer.id}</td>
+                    <td><img src="${eachPlayer.playerImageUrl}" width="80" height="50" /></td>
+                    <td>${eachPlayer.playerName}</td>
+                    <td>${eachPlayer.playerPosition}</td>
+                    <td>${eachPlayer.playerCost}</td>
+                    <td><button type="button" class="btn btn-warning" onclick="viewPlayer(${eachPlayer.id})">View</button></td>
+                    <td><button type="button" class="btn btn-primary" onclick="editPlayer(${eachPlayer.id})">Edit</button></td>
+                    <td><button type="button" class="btn btn-danger" onclick="deletePlayer(${eachPlayer.id})">Delete</button></td>
+                </tr>
+            `;
+        }
+
+        document.getElementById("data").innerHTML = content;
+    } else {
+        document.getElementById("data").innerHTML = "";
+        document.getElementById("message").innerText = "No players to display!";
+    }
+}

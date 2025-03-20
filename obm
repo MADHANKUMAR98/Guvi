@@ -764,3 +764,298 @@ This list provides a highly detailed set of Prometheus application layer metrics
 
 
 
+
+
+
+Absolutely! Here’s a highly detailed and expanded list of Infrastructure Layer Metrics that Prometheus can collect. These metrics span across servers, operating systems, network interfaces, disks, memory, containers, and cloud infrastructure.
+
+
+---
+
+1. CPU Metrics
+
+Metrics related to CPU usage, load, and efficiency.
+
+CPU Usage & Performance
+
+node_cpu_seconds_total{mode="user"} – Time spent in user mode
+
+node_cpu_seconds_total{mode="system"} – Time spent in system mode
+
+node_cpu_seconds_total{mode="idle"} – Idle time of CPU
+
+node_cpu_seconds_total{mode="iowait"} – Time waiting for I/O operations
+
+node_cpu_seconds_total{mode="steal"} – Time stolen by hypervisor (for VMs)
+
+node_cpu_seconds_total{mode="nice"} – Time spent by processes with reduced priority
+
+node_cpu_seconds_total{mode="irq"} – Time spent on handling hardware interrupts
+
+node_cpu_seconds_total{mode="softirq"} – Time spent on handling software interrupts
+
+
+CPU Load
+
+node_load1 – Load average over last 1 minute
+
+node_load5 – Load average over last 5 minutes
+
+node_load15 – Load average over last 15 minutes
+
+
+CPU Temperature & Throttling
+
+node_cpu_temperature_celsius – CPU temperature
+
+node_cpu_throttling_total – Number of times CPU throttled due to overheating
+
+
+
+---
+
+2. Memory (RAM) Metrics
+
+Metrics for memory usage, availability, and swapping.
+
+Memory Usage
+
+node_memory_MemTotal_bytes – Total system memory
+
+node_memory_MemFree_bytes – Free system memory
+
+node_memory_Active_bytes – Memory actively in use
+
+node_memory_Inactive_bytes – Memory that is not actively used but can be reclaimed
+
+
+Memory Caching & Buffering
+
+node_memory_Cached_bytes – Memory used for disk cache
+
+node_memory_Buffers_bytes – Memory used for buffers
+
+node_memory_SwapCached_bytes – Swap memory being used as cache
+
+
+Swap Usage
+
+node_memory_SwapTotal_bytes – Total swap memory
+
+node_memory_SwapFree_bytes – Free swap memory
+
+node_memory_SwapUsed_bytes – Swap memory in use
+
+
+
+---
+
+3. Disk & Storage Metrics
+
+Metrics for disk performance, I/O operations, and usage.
+
+Disk Usage
+
+node_filesystem_size_bytes{mountpoint="/"} – Total disk space available
+
+node_filesystem_free_bytes{mountpoint="/"} – Free disk space
+
+node_filesystem_used_bytes{mountpoint="/"} – Used disk space
+
+node_filesystem_avail_bytes{mountpoint="/"} – Space available to non-root users
+
+
+Disk I/O Performance
+
+node_disk_read_bytes_total{device="sda"} – Total bytes read from disk
+
+node_disk_written_bytes_total{device="sda"} – Total bytes written to disk
+
+node_disk_reads_completed_total{device="sda"} – Number of completed read operations
+
+node_disk_writes_completed_total{device="sda"} – Number of completed write operations
+
+node_disk_io_time_seconds_total{device="sda"} – Time spent in I/O operations
+
+
+Disk Latency & Errors
+
+node_disk_io_time_weighted_seconds_total{device="sda"} – Weighted disk I/O time
+
+node_disk_read_time_seconds_total{device="sda"} – Total read operation time
+
+node_disk_write_time_seconds_total{device="sda"} – Total write operation time
+
+node_disk_errors_total{device="sda"} – Number of disk errors
+
+
+
+---
+
+4. Network Metrics
+
+Metrics related to network interfaces, bandwidth, and packet transmission.
+
+Network Throughput
+
+node_network_receive_bytes_total{device="eth0"} – Bytes received
+
+node_network_transmit_bytes_total{device="eth0"} – Bytes transmitted
+
+
+Packet Statistics
+
+node_network_receive_packets_total{device="eth0"} – Packets received
+
+node_network_transmit_packets_total{device="eth0"} – Packets transmitted
+
+node_network_receive_errs_total{device="eth0"} – Receive errors
+
+node_network_transmit_errs_total{device="eth0"} – Transmit errors
+
+
+Connection Metrics
+
+node_network_connections_active – Number of active connections
+
+node_network_tcp_connections{state="ESTABLISHED"} – Established TCP connections
+
+node_network_tcp_connections{state="TIME_WAIT"} – TCP connections in TIME_WAIT state
+
+node_network_tcp_retransmits_total – Total TCP retransmissions
+
+
+
+---
+
+5. Process & System Metrics
+
+Monitoring active processes and system limits.
+
+Process Count & Uptime
+
+node_processes_total – Total number of processes
+
+node_processes_running – Number of running processes
+
+node_processes_blocked – Number of blocked processes
+
+node_process_start_time_seconds – Process start time
+
+
+File Descriptor Metrics
+
+node_file_descriptors_open – Open file descriptors
+
+node_file_descriptors_max – Maximum file descriptors allowed
+
+
+
+---
+
+6. Container Metrics (Docker, Kubernetes, etc.)
+
+Monitoring containerized environments.
+
+Container CPU Usage
+
+container_cpu_usage_seconds_total{container="my-container"} – Total CPU usage
+
+container_cpu_user_seconds_total – CPU time in user mode
+
+container_cpu_system_seconds_total – CPU time in system mode
+
+
+Container Memory Usage
+
+container_memory_usage_bytes – Memory used by container
+
+container_memory_max_usage_bytes – Maximum memory used
+
+container_memory_failures_total – Memory allocation failures
+
+
+Container Network Metrics
+
+container_network_receive_bytes_total – Bytes received
+
+container_network_transmit_bytes_total – Bytes transmitted
+
+
+Container Disk I/O
+
+container_fs_reads_total – Total disk read operations
+
+container_fs_writes_total – Total disk write operations
+
+
+
+---
+
+7. Cloud Infrastructure Metrics (AWS, GCP, Azure)
+
+Monitoring cloud-based resources.
+
+Compute Instance Metrics
+
+cloud_instance_cpu_usage – CPU usage of cloud VM
+
+cloud_instance_memory_used_bytes – Memory usage of VM
+
+cloud_instance_disk_io_bytes – Disk I/O of VM
+
+
+Cloud Storage Metrics
+
+cloud_storage_read_ops_total – Read operations on cloud storage
+
+cloud_storage_write_ops_total – Write operations on cloud storage
+
+cloud_storage_used_bytes – Total storage used
+
+
+Cloud Network Metrics
+
+cloud_network_in_bytes – Data received by instance
+
+cloud_network_out_bytes – Data sent by instance
+
+
+Load Balancer & Autoscaling Metrics
+
+cloud_loadbalancer_requests_total – Total requests to load balancer
+
+cloud_autoscaler_instances_total – Number of autoscaled instances
+
+
+
+---
+
+8. Security & Compliance Metrics
+
+Monitoring access control and security.
+
+Authentication & Authorization
+
+node_ssh_failed_logins_total – SSH failed login attempts
+
+node_sudo_attempts_total – Number of sudo command executions
+
+
+Firewall & Intrusion Detection
+
+node_firewall_dropped_packets_total – Number of packets dropped by firewall
+
+node_intrusion_detection_alerts_total – Alerts from intrusion detection systems
+
+
+
+---
+
+Final Thoughts
+
+This is an extensive list of infrastructure layer metrics that Prometheus can collect. Let me know if you want more specific metrics based on your infrastructure setup (e.g., Kubernetes, AWS, VMs, etc.)!
+
+
+
+
